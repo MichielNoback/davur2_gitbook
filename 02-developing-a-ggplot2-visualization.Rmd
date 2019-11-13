@@ -1,0 +1,168 @@
+# A real case: PTSS and buddy dogs
+
+## Background
+
+The next series of slides show data that was collected in a research investigating the effect of buddy dogs on mental health of subjects with PTSS. Here, I show only one variable that was collected, a stress score.
+
+Since the group size was very low, and there was no control group, statistical analyses was not really feasible.
+
+But the question was: is there an indication of positive effect and a reason to continue?
+
+
+## The data
+
+Distress measured at three time points (0, 3 and 12 months) through questionnaires.
+
+```{r read_distress_data, echo = FALSE}
+distress_data <- read.table("data/distress_score_timeseries.txt", sep = "\t", header = T, dec=",")
+head(distress_data)
+```
+
+## What to visualize
+
+Several aspects are relevant here:
+
+- people do not want to read lots of numbers in a table
+- small sample size
+- connected measurements
+- the audience: no knowledge of statistics
+
+## A Jitterplot
+
+I chose a jitterplot because:
+
+- it is well suited for small samples
+- it does not have the complexity of a box plot
+
+## Tidy the data
+
+Create a tidy ("long") version of the data
+
+
+```{r ptss_tidy}
+distress_data_tidy <- gather(distress_data,
+                        key=Timepoint,
+                        value=Stress, "T0", "T1", "T2")
+distress_data_tidy$Timepoint <- factor(distress_data_tidy$Timepoint, ordered = T)
+head(distress_data_tidy)
+```
+
+## First version
+
+Big plot symbols (powerpoint size), a bit of transparencey.
+Little horizontal jitter, no vertical jitter: already measured in continuous scale.
+
+```{r ptss_jitter_1, fig.width=6, fig.height=3.5, echo=F}
+ggplot(distress_data_tidy, aes(x=Timepoint, y=Stress)) +
+    geom_jitter(width = 0.1, size = 2, alpha = 0.6)
+```
+Code will be shown in final slide.
+
+## Add mean and IQR
+
+To emphasise the trend in the timeseries, means and standard deviations from the mean were added ("below" the plot symbols!) using `stat_summary()`
+
+```{r ptss_jitter_2, fig.width=6, fig.height=3.5, echo=F}
+mean.sd <- function(x) {
+  c(y = mean(x), ymin=(mean(x)-sd(x)), ymax=(mean(x)+sd(x)))
+}
+
+ggplot(distress_data_tidy, aes(x=Timepoint, y=Stress)) +
+    stat_summary(fun.data=mean.sd, color = "darkred", size = 1.5) +
+    geom_jitter(width = 0.1, size = 2, alpha = 0.6)
+```
+
+## Emphasise worst cases
+
+To emphasise the development of subjects who were in the worst shape at the onset of the research(T0), the top 25% at T0 were highlighted.
+
+```{r ptss_highlight_worst_at_T0, echo=FALSE}
+distress_data$high_at_T0 <- ifelse(distress_data$T0 > quantile(distress_data$T0, 0.75), "highlight", "no_highlight")
+
+distress_data_tidy <- gather(distress_data,
+                        key=Timepoint,
+                        value=Stress, "T0", "T1", "T2")
+distress_data_tidy$Timepoint <- factor(distress_data_tidy$Timepoint, ordered = T)
+head(distress_data)
+```
+
+----
+
+```{r ptss_jitter_3, fig.width=8, fig.height=4.5, echo=F}
+p <- ggplot(distress_data_tidy, aes(x=Timepoint, y=Stress)) +
+    stat_summary(fun.data=mean.sd, color = "darkred", size = 1.5) +
+    geom_jitter(width = 0.1, size = 2, alpha = 0.6, aes(color = high_at_T0))
+p
+```
+
+## Oops
+
+Totally wrong: regression towards the mean, somebody who knows pointed out (https://en.wikipedia.org/wiki/Regression_toward_the_mean). Repeat with averages.
+
+```{r ptss_highlight_worst_mean, echo=FALSE}
+distress_data$mean_distress <- apply(distress_data[,2:4], MARGIN = 1, FUN = mean)
+
+distress_data$high_mean <- ifelse(distress_data$mean_distress > quantile(distress_data$mean_distress, 0.75), "highlight", "no_highlight")
+
+distress_data_tidy <- gather(distress_data,
+                        key=Timepoint,
+                        value=Stress, "T0", "T1", "T2")
+distress_data_tidy$Timepoint <- factor(distress_data_tidy$Timepoint, ordered = T)
+#head(distress_data)
+```
+
+```{r ptss_jitter_4, fig.width=8, fig.height=4.5, echo=F}
+p <- ggplot(distress_data_tidy, aes(x=Timepoint, y=Stress)) +
+    stat_summary(fun.data=mean.sd, color = "darkred", size = 1.5) +
+    geom_jitter(width = 0.1, size = 2, alpha = 0.6, aes(color = high_mean))
+p
+```
+
+## Last tweaks: fonts and legend
+
+```{r ptss_jitter_5, fig.width=8, fig.height=4.5, echo=F}
+p + theme(axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16, face = "bold"),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)) +
+    labs(color="High at onset")
+```
+
+## The code for data preparation
+
+```{r ptss_data_prep_code, eval=FALSE}
+
+distress_data$high_at_T0 <- ifelse(
+    distress_data$T0 > quantile(distress_data$T0, 0.75),
+    "highlight",
+    "no_highlight")
+
+distress_data_tidy <- gather(distress_data,
+                        key=Timepoint,
+                        value=Stress, "T0", "T1", "T2")
+distress_data_tidy$Timepoint <- factor(distress_data_tidy$Timepoint,
+                                       ordered = T)
+
+mean.sd <- function(x) {
+  c(y = mean(x), ymin=(mean(x)-sd(x)), ymax=(mean(x)+sd(x)))
+}
+```
+
+
+## The code for the plot
+
+```{r ptss_plot_code, eval=FALSE}
+ggplot(distress_data_tidy, aes(x=Timepoint, y=Stress)) +
+    stat_summary(fun.data=mean.sd, color = "darkred", size = 1.5) +
+    geom_jitter(width = 0.1,
+                size = 2,
+                alpha = 0.6,
+                aes(color = high_at_T0)) +
+    labs(color="High at onset") +
+    theme(axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16, face = "bold"),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12))
+```
+
+

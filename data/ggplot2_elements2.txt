@@ -1,0 +1,8 @@
+    Data: Always start with the data, identify the dimensions you want to visualize.
+    Aesthetics: Confirm the axes based on the data dimensions, positions of various data points in the plot. Also check if any form of encoding is needed including size, shape, color and so on which are useful for plotting multiple data dimensions.
+    Scale: Do we need to scale the potential values, use a specific scale to represent multiple values or a range?
+    Geometric objects: These are popularly known as ‘geoms’. This would cover the way we would depict the data points on the visualization. Should it be points, bars, lines and so on?
+    Statistics: Do we need to show some statistical measures in the visualization like measures of central tendency, spread, confidence intervals?
+    Facets: Do we need to create subplots based on specific data dimensions?
+    Coordinate system: What kind of a coordinate system should the visualization be based on — should it be cartesian or polar?
+#https://towardsdatascience.com/

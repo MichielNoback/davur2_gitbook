@@ -1,0 +1,34 @@
+--- 
+title: "Data Analysis and Visualization using R (2)"
+author: "Michiel Noback"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+github-repo: rstudio/bookdown-demo
+description: "This is the ebook accompanying the course Data Analysis and Visualization using R 2 (DAVuR2)."
+---
+
+# Preface {-}
+
+This is the ebook accompanying the course Data Analysis and Visualization using R 2 (DAVuR2). The book will be available during the final test. These packages and subjects will be covered:
+
+- ggplot2
+- tidyr
+- dplyr
+- exploratory data analysis (EDA)
+- working with Timeseries and Dates and times
+- programming R: functions, scripts, packages and dockumentation
+
+Note that this entire ebook was written in Markdown, using a RMarkdown extension called bookdown [@bookdown]. This is (sort of) a "gitbook" layer on top of the RMarkdown processing package knitr [@knitr].
+
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+```
