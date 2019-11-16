@@ -126,7 +126,7 @@ The way this is achieved is through "**_The grammar of graphics_**"
 
 The grammar of graphics tells us that a statistical graphic is a mapping from data to geometric objects (points, lines, bars) with aesthetic attributes (colour, shape, size).
 
-The plot may also contain statistical transformations of the data and is drawn on a specific coordinate system. Faceting -grid layout- can be used to generate the same plot for different subsets of the dataset.
+The plot may also contain statistical transformations of the data and is drawn on a specific coordinate system. Facetting -grid layout- can be used to generate the same plot for different subsets of the dataset.
 (Wickham, 2010)
 
 
@@ -456,7 +456,7 @@ dr_plot +
 
 This example shows how you can overlay plots on top of each other as much as you like.
 
-```{r}
+```{r plot-overlays, fig.asp=.75, out.width='80%', fig.align='center'}
 dr_plot <- ggplot(dose_response_tidy, aes(x = dose, y = response))
 dr_plot + 
     geom_boxplot(fill='#E69F00') +
@@ -479,37 +479,74 @@ A histogram is a means to visualize a distribution.
 
 Here we look at the eruption intervals of the "faithful" geyser. A `binwidth` argument is used to adjust the number of bins. Alternative use the `bins` argument.
 
-```{r}
+```{r histogram1, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
     geom_histogram(binwidth = 3)
 ```
 
 There are some statistics available to adjust what is shown on the y axis. The default that is used by `geom_histogram` is `..count..`, but if you want it scaled to a maximum of 1, use `..ncount..`
 
-```{r}
+```{r histogram2, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
     geom_histogram(binwidth = 3, aes(y=..ncount..))
 ```
 
 If you want proportions, you could do this:
 
-```{r}
+```{r histogram3, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
     geom_histogram(binwidth = 3, aes(y=..count.. / sum(..count..)))
 ```
 
+### Violin plot {-}
+
+A violin plot is a compact display of a continuous distribution. It is a blend of geom_boxplot() and geom_density(): a violin plot is a mirrored density plot displayed in the same way as a boxplot. It is not seen as often as should be. An example best explains.
+
+```{r violinplot, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(data=airquality, mapping = aes(x = Month, y = Temp, fill=Month)) +
+    geom_violin() + theme(legend.position = "none")
+```
+
+
 
 ### Overview of the main geoms {-}
 
+There are many geoms and even more outside the ggplot2 package.
+Here is a small overview of some of them.
 
-INSERT TABLE AND EXAMPLES
+```{r ggplot2-building-blocks-2, fig.asp=.75, out.width='80%', fig.align='center', echo=FALSE}
+geoms <- read.table("data/geom_functions.txt",
+                     sep=";",
+                     header = T,
+                     as.is = 1:2)
+knitr::kable(geoms,
+             caption = 'Some more geoms')
+```
 
-
+If you want to know them all, simply type `?geom_` and select the one that looks like the thing you want.
 
 ## Inheritance of aesthetics
 
-INSERT CONCEPT OF INHERITING AESTHETICS
+Like the main `ggplot()` function, every `geom_` function accepts its own `mapping = aes(...)`. The mapping is _inherited_ from the ggplot() function, but you can specify your own "local" aesthetic mapping. Aesthetics defined within a geom_ function are scoped to that function only.
 
+In the plot below you see how this works (it is not a nice plot anymore, I know).
+Note that any aesthetic value specified outside the aes() function is simply a static property (in that scope).
+
+```{r inheritace, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
+    geom_smooth(aes(linetype = Month), method="lm") +
+    geom_point(aes(color = Month), alpha = 0.7) 
+```
+
+## Facetting
+
+Facetting is the process of splitting into multiple plots with exactly the same coordinate system where each plot show a subset of the data. It can be applied to any geom. The figure above could be improved slightly with this technique. 
+
+```{r facetting, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
+    geom_smooth(aes(linetype = Month), method="lm") +
+    geom_point(aes(color = Month), alpha = 0.7) + facet_wrap(. ~ Month)
+```
 
 
 ## Experimenting with geoms and aesthetics
@@ -523,11 +560,86 @@ Look at every result and ask yourself
 - is it the story you seek to tell?
 
 Only after you finish this phase you should apply make-up (labels, texts).
+Maybe new questions have arisen as a result of the plot you created?
 
+## Final tweeks
 
+This section describes aspects that fall outside the standard realm of plot construction.
 
+### Scales and Coordinates {-}
 
+Scales and Coordinates are used to adjust the way your data is mapped and displayed. Here, a log10 scale is applied to the y axis and the x axis is reversed.
 
+```{r tweeking, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(data = cars, mapping = aes(x = speed, y = dist)) + 
+    geom_point() +
+    scale_y_log10() + 
+    scale_x_reverse() 
+```
+
+In other contexts, such as geographic information analysis, the scale is extremely important.
+The default coordinate system in ggplot2 is `coord_cartesian()`. In the plot below, a different coordinate system is used. 
+
+```{r polarplot, fig.asp=.75, out.width='80%', fig.align='center'}
+# function to compute standard error of mean
+se <- function(x) sqrt(var(x)/length(x)) 
+
+DF <- data.frame(variable = as.factor(1:10), value = log2(2:11))
+
+ggplot(DF, aes(variable, value, fill = variable)) +
+    geom_bar(width = 1, stat = "identity", color = "white") +
+    geom_errorbar(aes(ymin = value - se(DF$value), 
+                      ymax = value + se(DF$value), 
+                      color = variable), 
+                      width = .2) + 
+    scale_y_continuous(breaks = 0:nlevels(DF$variable)) +
+    coord_polar() 
+```
+
+### Labels {-}
+
+You have seen the `xlab()`, `ylab()`, and `labs()` functions at work already.
+
+### Themes {-}
+
+The theme is used to make changes to the overall appearance of the plot. Two approaches exist. The simplest one is selecting a specific theme and make some minor adjustments at most.
+Here are is the minimal theme where the text sizes have been modified somewhat.
+
+```{r themes1, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
+  geom_point(mapping=aes(color=Month)) + 
+  geom_smooth(method="loess") +
+  xlab(expression("Temperature " (degree~F))) +
+  ylab("Ozone (ppb)") +
+  labs(color="Month") +
+  theme_minimal(base_size = 14)
+```
+
+Note that if the `color = Month` aesthetic would have been put in the main ggplot call, the smoother would have been split over the Month groups.
+
+Alternatively, the theme can be specified completely, as show below.
+
+```{r themes2, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
+  geom_point(mapping=aes(color=Month)) + 
+  geom_smooth(method="loess") +
+  xlab("Temperature (F)") +
+  ylab("Ozone (ppb)") +
+  labs(color="Month") +
+  theme(axis.text.x = element_text(size = 12, colour = "blue", face = "bold"),
+        axis.text.y = element_text(size = 12, colour = "red", face = "bold"),
+        axis.title.x = element_text(size = 16, colour = "blue", face = "bold.italic"),
+        axis.title.y = element_text(size = 14, colour = "red", face = "bold.italic"),
+        axis.line = element_line(colour = "darkblue", size = 1, linetype = "solid"),
+        panel.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid"),
+        panel.grid.minor = element_blank())
+```
+
+As you can see, there are `element_text()`, `element_line()` and `element_rect()` functions to specify these types opf plot elements. The `element_blank()` function can be used in various theme aspects to prevent it from being displayed.
+
+### stats {-}
+
+The last aspect is the
 
 
  
