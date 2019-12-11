@@ -1,6 +1,6 @@
 # The `ggplot2` package {#ggplot2}
 
-```{r prepare, include=FALSE}
+```{r, include=FALSE}
 ## Utility functions: show_palette()
 source("scripts/utils.R")
 knitr::opts_knit$set(cache = TRUE,
@@ -484,18 +484,20 @@ ggplot(data=faithful, mapping = aes(x = waiting)) +
     geom_histogram(binwidth = 3)
 ```
 
-There are some statistics available to adjust what is shown on the y axis. The default that is used by `geom_histogram` is `..count..`, but if you want it scaled to a maximum of 1, use `..ncount..`
+There are some statistics available to adjust what is shown on the y axis. The default that is used by `geom_histogram` is `stat(count)`, so if you don't specify anything this will be used. But if you want it scaled to a maximum of 1, use `stat(count / max(count))`. The `stat()` function is a flag to ggplot2 that you want to use calculated aesthetics produced by the statistic.You can use any transformation of the statistic, e.g. `y = stat(log2(count))`.
 
 ```{r histogram2, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
-    geom_histogram(binwidth = 3, aes(y=..ncount..))
-```
+    geom_histogram(binwidth = 3, aes(y = stat(count / max(count)))) + 
+    ylab(label = "normalized proportion")
+    ```
 
-If you want proportions, you could do this:
+Alternatively, if you want percentages, you can use `y = stat(count / sum(count) * 100)`.
 
 ```{r histogram3, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
-    geom_histogram(binwidth = 3, aes(y=..count.. / sum(..count..)))
+    geom_histogram(binwidth = 3, mapping = aes(y = stat(count / sum(count) * 100))) + 
+    ylab(label = "%")
 ```
 
 ### Violin plot {-}
@@ -532,7 +534,7 @@ Like the main `ggplot()` function, every `geom_` function accepts its own `mappi
 In the plot below you see how this works (it is not a nice plot anymore, I know).
 Note that any aesthetic value specified outside the aes() function is simply a static property (in that scope).
 
-```{r inheritace, fig.asp=.75, out.width='80%', fig.align='center'}
+```{r inheritace, fig.asp=.75, out.width='80%', fig.align='center', warning=F}
 ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
     geom_smooth(aes(linetype = Month), method="lm") +
     geom_point(aes(color = Month), alpha = 0.7) 
@@ -542,7 +544,7 @@ ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
 
 Facetting is the process of splitting into multiple plots with exactly the same coordinate system where each plot show a subset of the data. It can be applied to any geom. The figure above could be improved slightly with this technique. 
 
-```{r facetting, fig.asp=.75, out.width='80%', fig.align='center'}
+```{r facetting, fig.asp=.75, out.width='80%', fig.align='center', warning=F}
 ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
     geom_smooth(aes(linetype = Month), method="lm") +
     geom_point(aes(color = Month), alpha = 0.7) + facet_wrap(. ~ Month)
@@ -636,10 +638,6 @@ ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
 ```
 
 As you can see, there are `element_text()`, `element_line()` and `element_rect()` functions to specify these types opf plot elements. The `element_blank()` function can be used in various theme aspects to prevent it from being displayed.
-
-### stats {-}
-
-The last aspect is the
 
 
  

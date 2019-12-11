@@ -1,2 +1,8 @@
 # Working with Dates and Times {#date-time}
 
+hallo daar ben ik
+
+```{r first-plot2, echo = FALSE}
+plot(x = 1:10, y = rnorm(10))
+```
+

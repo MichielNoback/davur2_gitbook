@@ -1,21 +1,141 @@
 # package tidyr {#tidyr}
 
-You can label chapter and section titles using `{#label}` after them, e.g., we can reference Chapter \@ref(intro). If you do not manually label them, there will be automatic labels anyway.
 
-Figures and tables with captions will be placed in `figure` and `table` environments, respectively.
-
-```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center'}
-par(mar = c(4, 4, .1, .1))
-plot(pressure, type = 'b', pch = 19)
+```{r, include=FALSE}
+knitr::opts_knit$set(cache = TRUE,
+                     tidy = TRUE,
+                     tidy.opts = list(blank = FALSE, width.cutoff = 60))
+library(ggplot2)
+library(tidyr)
 ```
 
-Reference a figure by its code chunk label with the `fig:` prefix, e.g., see Figure \@ref(fig:nice-fig). Similarly, you can reference tables generated from `knitr::kable()`, e.g., see Table \@ref(tab:nice-tab).
+## Introduction
 
-```{r nice-tab, tidy=FALSE}
+This chapter explores the package `tidyr`. It is also part of the `tidyverse` set of packages.
+
+This package is an essential tool in the process of organizing you data in a **_tidy_** way.
+A dataset is considered **_tidy_** when it is formed according to these rules:
+
+1. Each variable has its own column.
+2. Each observation has its own row.
+3. Each value has its own cell.
+
+Here is an example dataset, downloaded from the WHO website [here](https://www.who.int/immunization/monitoring_surveillance/burden/vpd/surveillance_type/active/measles_monthlydata/en/)
+Note: the original data was exported from Excel to csv, and a text editor was used to replace single quote occurrences ("'") with an underscore. Otherwise, data will be corrupted.
+
+
+The data concerns disease occurrences for two diseases: measles and rubella ("rode hond" in Dutch).
+Suppose I would like to analyse distribution and timeline of these two diseases, in relation to each other.
+There are two problems here:
+1. The data needs to be clean
+2. The data needs to be combined from two files into one dataframe.
+
+Let's start with the first: measles. 
+Here is part of the measles data. It is not tidy. Why not?
+
+```{r load-measles, echo=F}
+measles <- read.table("data/measlescasesbycountrybymonth.csv", sep=";", header = T)
+knitr::kable(measles[1:15, 1:7], caption = "Why is this not tidy?")
+```
+
+The monthly counts are in separate columns. However, they are really all the same variable: measles cases. So this data needs to be tidied: There should be only one column called "cases" and another column called "month". Or maybe even a single column "Date"? Because year and month are actually elements of a single unit of course. We'll leave that for a later chapter.
+
+Tidying has never been simpler, using the `gather` function:
+
+```{r tidy-measles}
+measles_tidy <- gather(data = measles, key = "Month", value = "Cases", names(measles)[5:16])
+knitr::kable(head(measles_tidy, n=15))
+```
+
+In the `gather` function, you provide three pieces of information:  
+
+1. The name of the `key`. This is the name of the newly created column that will hold the information that is now present in the column headers that you are going to collect - in this case, the months names Januari-December. Hence, `key = Month`.
+
+2. The name for `value`. The `value` argument is the name of the column that will hold the actual measurements. In this case, the number of cases from each of the 12 month columns will be "gathered" in this column. Hence, `value = Cases`.
+
+3. Finally, you need to tell which columns to collect. Here, all the month columns are collected: `names(measles)[5:16]`
+
+The result is a "flattened but elongated" data structure. All data from the non-gathered columns (`Region`, `ISO3`, `Country`, and `Year`) will be expanded/duplicated for each of the 12 month rows that will be created.
+
+Here you can see the numbers as verification of the process:
+
+```{r}
+## The original dimensions
+dim(measles)
+## The tidied data
+dim(measles_tidy)
+## 12 times 1746 is 20952 rows
+nrow(measles_tidy) / 12
+```
+
+Obviously, the data you gather into a single column must be a single measurement type!
+
+When the names of the columns you want to gather have a common prefix, you can use `starts_with()` (from package `tidyselect`). Here is the dose-response example again:
+
+```{r}
+dose_response <- read.table("data/dose_response2.txt",
+                            header = T,
+                            sep=";",
+                            colClasses=c("character", "factor", "integer", "integer"))
+
+names(dose_response)
+tmp <- gather(data = dose_response, key = "Dose", value = "Response", starts_with("dose"))
+knitr::kable(head(tmp, n = 15))
+```
+
+The suffix case works with `ends_width()` of course. Type `tidyselect::` and use autocomplete to find out which helpers exist. These functions allow you to select variables based on their names.
+
+How about a case with two sets of columns? Here, to create an example, a `tibble` is used. This is an extension of the well-known dataframe type.
+
+```{r}
+two_column_sets <- tibble(subject = letters[1:5],
+              T0.Control = rnorm(5, 10, 1),
+              T0.Treated = rnorm(5, 9.5, 1.2),
+              T1.Control = rnorm(5, 11, 1.5),
+              T1.Treated = rnorm(5, 16, 2))
+knitr::kable(two_column_sets)
+```
+
+To be tidy, we need the data in this form:
+
+```
+subject time treatment response
+a       T0   Control   10.764
+a       T0   Treated   8.681
+a       T1   Control   13.057
+a       T1   Treated   15.188
+...
+```
+
+At first it seems simple enough. Let's try:
+
+```{r}
 knitr::kable(
-  head(iris, 20), caption = 'Here is a nice table!',
-  booktabs = TRUE
-)
+    gather(two_column_sets, key = Treatment, value = response, c(4, 5)))
 ```
 
-You can write citations, too. For example, we are using the **bookdown** package [@R-bookdown] in this sample book, which was built on top of R Markdown and **knitr** [@xie2015].
+That's not going to work.
+Maybe this?
+
+```{r}
+knitr::kable(
+    gather(two_column_sets, key = TreatTime, value = response, starts_with("T")))
+```
+
+This is actually on the right track. Now the only thing that needs to be done is split the `Treatment` column in two:
+
+```{r}
+tmp <- gather(two_column_sets, key = TreatTime, value = response, starts_with("T"))
+knitr::kable(
+    separate(data = tmp, col = TreatTime, into = c("Timepoint", "Treatment")))
+```
+
+Or, in one statement making use of the chaining operator `%>%` that we'll see more in later chapters:
+
+```{r}
+res <- gather(two_column_sets, key = TreatTime, value = response, starts_with("T")) %>%
+    separate(col = TreatTime, into = c("Timepoint", "Treatment"))
+knitr::kable(res)
+```
+
+
