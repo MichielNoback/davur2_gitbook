@@ -1,11 +1,11 @@
-# package tidyr {#tidyr}
+# Package tidyr {#tidyr}
 
 
 ```{r, include=FALSE}
 knitr::opts_knit$set(cache = TRUE,
                      tidy = TRUE,
                      tidy.opts = list(blank = FALSE, width.cutoff = 60))
-library(ggplot2)
+
 library(tidyr)
 ```
 
@@ -40,10 +40,15 @@ knitr::kable(measles[1:15, 1:7], caption = "Why is this not tidy?")
 
 The monthly counts are in separate columns. However, they are really all the same variable: measles cases. So this data needs to be tidied: There should be only one column called "cases" and another column called "month". Or maybe even a single column "Date"? Because year and month are actually elements of a single unit of course. We'll leave that for a later chapter.
 
+## The `gather()` function
+
 Tidying has never been simpler, using the `gather` function:
 
 ```{r tidy-measles}
-measles_tidy <- gather(data = measles, key = "Month", value = "Cases", names(measles)[5:16])
+measles_tidy <- gather(data = measles, 
+                       key = "Month", 
+                       value = "Cases", 
+                       5:16)
 knitr::kable(head(measles_tidy, n=15))
 ```
 
@@ -53,7 +58,7 @@ In the `gather` function, you provide three pieces of information:
 
 2. The name for `value`. The `value` argument is the name of the column that will hold the actual measurements. In this case, the number of cases from each of the 12 month columns will be "gathered" in this column. Hence, `value = Cases`.
 
-3. Finally, you need to tell which columns to collect. Here, all the month columns are collected: `names(measles)[5:16]`
+3. Finally, you need to tell which columns to collect. Here, all the month columns are collected: `5:16`. you can also use the names of the columns you want to gather.
 
 The result is a "flattened but elongated" data structure. All data from the non-gathered columns (`Region`, `ISO3`, `Country`, and `Year`) will be expanded/duplicated for each of the 12 month rows that will be created.
 
@@ -70,33 +75,42 @@ nrow(measles_tidy) / 12
 
 Obviously, the data you gather into a single column must be a single measurement type!
 
-When the names of the columns you want to gather have a common prefix, you can use `starts_with()` (from package `tidyselect`). Here is the dose-response example again:
+When the names of the columns you want to gather have a common prefix, you can use `starts_with()` (from package `tidyselect`). Here is the dose-response example from the ggplot2 chapter again:
 
 ```{r}
 dose_response <- read.table("data/dose_response2.txt",
                             header = T,
                             sep=";",
                             colClasses=c("character", "factor", "integer", "integer"))
-
 names(dose_response)
-tmp <- gather(data = dose_response, key = "Dose", value = "Response", starts_with("dose"))
-knitr::kable(head(tmp, n = 15))
+
+## gather with startswith()
+dose_response_long <- gather(data = dose_response, 
+              key = "Dose", 
+              value = "Response", 
+              starts_with("dose"))
+knitr::kable(head(dose_response_long, n = 15))
+save(dose_response_long, file = "data/dose_response_long.Rdata")
 ```
 
-The suffix case works with `ends_width()` of course. Type `tidyselect::` and use autocomplete to find out which helpers exist. These functions allow you to select variables based on their names.
+The suffix case works -not surprisingly- with `ends_width()`. Type `tidyselect::` and use autocomplete to find out which helper functions exist for this kind of task. These functions allow you to select variables based on their names, and obviously have a much broader usefullness.
 
-How about a case with two sets of columns? Here, to create an example, a `tibble` is used. This is an extension of the well-known dataframe type.
+## A more complex problem: two sets of columns
+
+How about a case with two sets of columns? Here, to create an example, a `tibble` is used. This is an extension of the well-known `data.frame` type. It is also part of the `tidyverse` and will be discussed in more detail as well.
 
 ```{r}
-two_column_sets <- tibble(subject = letters[1:5],
-              T0.Control = rnorm(5, 10, 1),
-              T0.Treated = rnorm(5, 9.5, 1.2),
-              T1.Control = rnorm(5, 11, 1.5),
-              T1.Treated = rnorm(5, 16, 2))
-knitr::kable(two_column_sets)
+set.seed(1234)
+two_two_col <- tibble(subject = letters[1:5],
+              T0_Control = rnorm(5, 10, 1),
+              T0_Treated = rnorm(5, 9.5, 1.2),
+              T1_Control = rnorm(5, 11, 1.5),
+              T1_Treated = rnorm(5, 16, 2))
+knitr::kable(two_two_col)
 ```
 
-To be tidy, we need the data in this form:
+The measurements are spread over 4 columns and the column names actually represent the levels of **_two_** variables: Treatment and Time.
+Thus, to be tidy we need to mangle the data in this form:
 
 ```
 subject time treatment response
@@ -107,35 +121,155 @@ a       T1   Treated   15.188
 ...
 ```
 
-At first it seems simple enough. Let's try:
+It seems simple enough. Let's try:
 
 ```{r}
 knitr::kable(
-    gather(two_column_sets, key = Treatment, value = response, c(4, 5)))
+    gather(data = two_two_col, 
+           key = TreatTime, 
+           value = response, 
+           starts_with("T")))
 ```
 
-That's not going to work.
-Maybe this?
+This is actually on the right track! Now the only thing that needs to be done is split the `TreatTime` column in two columns. We can do this with the `separate()` function which also comes with the `tidyr` package:
 
 ```{r}
-knitr::kable(
-    gather(two_column_sets, key = TreatTime, value = response, starts_with("T")))
+two_two_col_long <- gather(data = two_two_col,
+                           key = TreatTime, 
+                           value = response, 
+                           starts_with("T"))
+two_two_col_long_spl <- separate(data = two_two_col_long, 
+                             col = TreatTime, 
+                             into = c("Timepoint", "Treatment"))
+knitr::kable(two_two_col_long_spl)
 ```
 
-This is actually on the right track. Now the only thing that needs to be done is split the `Treatment` column in two:
+
+The function `separate()` will split on the non-word chracter if no separator is specified; in this case the underscore. This method is discussed separately below (pun intended).
+
+
+The tidyr package provides the **_chaining operator_** `%>%` that makes it possible to combine this into a single statement. We'll see more of this in later chapters:
 
 ```{r}
-tmp <- gather(two_column_sets, key = TreatTime, value = response, starts_with("T"))
-knitr::kable(
-    separate(data = tmp, col = TreatTime, into = c("Timepoint", "Treatment")))
+two_two_col_long_spl <- gather(data = two_two_col, 
+        key = TreatTime, 
+        value = response, 
+        starts_with("T")) %>%   ## CHAIN IT!
+    separate(col = TreatTime, 
+             into = c("Timepoint", "Treatment"))
+knitr::kable(head(two_two_col_long_spl, 3))
 ```
 
-Or, in one statement making use of the chaining operator `%>%` that we'll see more in later chapters:
+
+By the way, in base R you would split a column using the `read.table` function:
+
+```{r base-r-separate-colum, eval=FALSE}
+two_cols <- read.table(text = two_two_col_long$TreatTime, 
+                       sep="_")
+names(two_cols) <- c("Time", "Treatment")
+two_two_col_long <- cbind(two_two_col, two_cols)
+tmp$TreatTime <- NULL
+```
+
+The tidyr package has a recent addition called `pivot_longer` which is specifically tailored for this kind of task. It requires a bit of knowledge of regular expressions though:
 
 ```{r}
-res <- gather(two_column_sets, key = TreatTime, value = response, starts_with("T")) %>%
-    separate(col = TreatTime, into = c("Timepoint", "Treatment"))
-knitr::kable(res)
+alt <- pivot_longer(data = two_two_col,
+             cols = -"subject",
+             names_pattern = "(T.)_(Control|Treated)",
+             names_to = c("Time", "Treatment"),
+             values_to = "Response")
+knitr::kable(head(alt, 8))
+```
+
+The expression `names_pattern = "(T.).(Control|Treated)"` tells the function there are two groups in the column names to be widened. These groups are defined by the two sets of parentheses `()`. The first group is defined by the letter "T" followd by a single character specified by the dot `.` which says "any character". The second group is `(Control|Treated)` which tells the function that it is formed by the word Control or Treated. In between is a random single underscore "_".
+Alternatively, the `names_sep` argument could have been used. For instance, `names_sep = 2` tells to split the column names after the second character, yielding this slightly less aesthetic result:
+
+```{r}
+alt <- pivot_longer(data = two_two_col,
+             cols = -"subject",
+             names_sep = 2,
+             names_to = c("Time", "Treatment"),
+             values_to = "Response")
+knitr::kable(head(alt, 8))
+```
+
+Here is the dose_response data, processed by pivot_longer as well:
+
+```{r}
+tmp <- pivot_longer(data = dose_response,
+             cols = -c("patient", "sex"),
+             names_to = "dose",
+             names_pattern = "dose(10|100)mg",
+             values_to = "response")
+knitr::kable(tmp)
+```
+
+Finally, we could have done the same with the measles data from the beginning of this chapter. The names need not even be separated in this case: all month columns represent a single variable:
+
+```{r}
+head(measles)
+alt <- pivot_longer(data = measles,
+             cols = -(1:4),
+             values_to = "Cases",
+             names_to = "Month")
+knitr::kable(head(alt, 8))
 ```
 
 
+## Widening with `spread()` and `pivot_wider()`
+
+The opposite of `gather()` is `spread()`. First the simple case of a single column:
+
+```{r}
+head(dose_response_long)
+```
+
+
+```{r}
+##Quoting the column names is often not required in the tidyverse
+tmp <- spread(data = dose_response_long, key = Dose, value = Response)
+knitr::kable(head(tmp, 5))
+```
+
+Here is the same with `pivot_wider`:
+
+```{r}
+tmp <- pivot_wider(data = dose_response_long,
+                   names_from = Dose,
+                   values_from = Response)
+knitr::kable(head(tmp, 5))
+```
+
+
+With the `two_two_col_long` from above, the `spread` function is not enough. You need the `pivot_wider` function.
+
+The two-set two-column example is processed like this:
+
+```{r}
+tmp <- pivot_wider(data = two_two_col_long_spl,
+                   names_from = c(Timepoint, Treatment),
+                   values_from = response,
+                   names_sep = "..")
+knitr::kable(head(tmp, 5))
+```
+
+## `separate()` columns
+
+The function `separate()` will split on the non-word chracter if no separator is specified. Here a separator is prvided telling to split on an X with two other characters on either side.
+
+```{r}
+tmp <- data.frame(x = 10:15, a = paste0(1:6, "zXb", letters[1:6]))
+tmp
+separate(data = tmp, col = a, sep = ".X.", into=c("b", "c"))
+```
+
+## Drop rows with missing values: `drop_na()`
+
+This function is extremely simple and usefull. It drops rows with missing from a dataframe and returns a cured copy:
+
+```{r}
+head(drop_na(airquality))
+```
+
+There is of course an equivalent in base R: `na.omit()`.

@@ -1,2 +1,172 @@
-# package dplyr {#dplyr}
+# Data mangling with package `dplyr` {#dplyr}
+
+```{r, include=FALSE}
+knitr::opts_knit$set(cache = TRUE,
+                     tidy = TRUE,
+                     tidy.opts = list(blank = FALSE, width.cutoff = 60))
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+load("data/dose_response_long.Rdata")
+```
+
+This package, which is also in the tidyverse, is quite versatile. You can use it for a wide range of activities.
+Some examples are  
+
+- summarizing data; e.g. counting, ranking, 
+- selecting, filtering and sampling cases
+- manipulating data; creatng new or changing existing variables
+- combining tables
+
+In this chapter only a small selection of this package will be discussed.
+
+There is an excellent cheat sheet for this package. You can find it [here](https://rstudio.com/resources/cheatsheets/). For convenience, primarily because this gitbook is also used in offline mode during examinations, I included it here as well: [dplyr-data-transformation.pdf](graphics/dplyr-data-transformation.pdf)
+
+Before embarking on an overview of the most important functions, let's first look at the `tibble` and the `%>%` chaining operator.
+
+
+The sections below are copied (and adapted) for in part from the `dplyr` and `tibble` vignettes which can be found [here](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html) and [here](https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html)
+
+## Tibbles
+
+Tibbles are a modern take on data frames. They keep the features that have stood the test of time, and drop the features that used to be convenient but are now frustrating (i.e. converting character vectors to factors). There is an entire package dedicated to tibbles, not surprisingle called `tibble` you usually do not have to load the ackage because dplyr and tidyr do that already (they depend on it themselves).
+
+Use the `tibble()` constructor to create them as literals. There are several advantages over the old `data.frame` constructor:  
+
+- It never changes an input’s type (i.e., no more `stringsAsFactors = FALSE`!).
+- It never adjusts the names of variables: `name with space` does not become `name.with.space`.
+- It evaluates its arguments lazily and sequentially:
+
+    ```{r}
+    tibble(x = 1:5, y = x ^ 2)
+    ```
+
+- It never uses `row.names()`. The whole point of tidy data is to store variables in a consistent way. So it never stores a variable as special attribute.
+- It only recycles vectors of length 1. This is because recycling vectors of greater lengths is a frequent source of bugs.
+
+**Coersion**
+To complement `tibble()`, tibble provides `as_tibble()` to coerce objects into tibbles.
+
+### By-row constructor
+There is a third function, `tribble()` that you can use to define a table in an alternative way: row-wise.
+
+```{r}
+tribble(
+  ~colA, ~colB,
+  "a",   1,
+  "b",   2,
+  "c",   3
+)
+```
+
+
+### Tibbles vs data frames
+There are three key differences between tibbles and data frames: printing, subsetting, and recycling rules.  
+
+**Printing**  
+- When you print a tibble, it only shows the first ten rows and all the columns that fit on one screen. It also prints an abbreviated description of the column type, and uses font styles and color for highlighting.
+- You can control the default appearance with options:
+    - `options(tibble.print_max = n, tibble.print_min = m)`: if there are more than `n` rows, print only the first `m` rows. Use `options(tibble.print_max = Inf)` to always show all rows.
+    - `options(tibble.width = Inf)` will always print all columns, regardless of the width of the screen.
+
+**Subsetting**  
+Tibbles are quite strict about subsetting. `[` always returns another tibble. Contrast this with a data frame: sometimes `[` returns a data frame and sometimes it just returns a vector.
+
+**Recycling**  
+When constructing a tibble, only values of length 1 are recycled. The first column with length different to one determines the number of rows in the tibble, conflicts lead to an error. This also extends to tibbles with zero rows, which is sometimes important for programming:
+
+
+## The chaining operator `%>%` 
+
+In any workflow, it happens all the time that you apply some function to a dataframe, store the result in a new variable (or overwrite the first) and apply a second function to this dataframe. And so on.
+There are two undesirable results with this. The first is cluttered code: many variables; how are you going to name them? Just have a look at the previous chapter and you'll understand. The second -and much worse if you are working with big dataframes- is cluttering of the environment and memory footprint.
+
+This is where the chaining operator comes in. It helps you create clean workflows where intermediate results are only stored when opportune.
+
+It comes down to this simple notion: `x %>% f(y))` is equivalent to f(x, y) where `f` is any function.
+
+Here is the good old dose-response example again.
+
+```{r}
+knitr::kable(head(dose_response_long))
+```
+
+Suppose I want to remove rows with missing values (there aren't any - this is for the sake of argument), select the female subjects and then calculate the mean response for the two doses.
+In base R, you could do something like this.
+
+```{r}
+dose_response_long_no_na <- na.omit(dose_response_long)
+dose_response_long_no_na_only_female <- subset(x = dose_response_long_no_na, subset = sex == "f")
+aggregate(Response ~ Dose, data = dose_response_long_no_na_only_female, FUN = mean)
+```
+
+I know, I exaggerated a bit with the variable names.
+
+Here is the same workflow, using `dplyr`, but with the intermediate variables. It even has an explicit operation extra (`group_by()`).
+
+```{r}
+dose_response_long_no_na <- drop_na(dose_response_long)
+dose_response_long_no_na_only_female <- filter(dose_response_long_no_na, sex == "f")
+dose_response_long_no_na_only_female_grouped <- group_by(dose_response_long_no_na_only_female,
+                                                         Dose)
+summarize(dose_response_long_no_na_only_female_grouped, mean_response = mean(Response))
+```
+
+And, finally, how dplyr is supposed to be used.
+
+```{r}
+dose_response_long %>%
+    drop_na() %>%
+    filter(sex == "f") %>%
+    group_by(Dose) %>%
+    summarize(mean_response = mean(Response))
+```
+
+Isn't that a treat for sore eyes? A highly readable, minimal piece of code, no environment clogged with data you forget to clean up. 
+Note that `drop_na` is actually from the tidyr package. However, it works seamlessly in the chaining context of dplyr functions.
+
+This is the power of dplyr and the chaining operator!
+If you do actually want the result stored you only need to assign to a single variable at the beginning of the chain.
+
+Does it work with `ggplot2` as well?
+
+```{r chain-to-ggplot, fig.asp=.75, out.width='60%', fig.align='center'}
+dose_response_long %>%
+    drop_na() %>%
+    ggplot(mapping = aes(x = sex, y = Response)) +
+    geom_boxplot() +
+    facet_wrap(Dose ~ .)
+```
+
+I don't know about you, but this kind of thing makes me happy!
+The only thing that bothers me aesthetically is the `+` instead of `%>%` in ggplot2 context. 
+On the other hand it is layering, not chaining what ggplot2 does, so there is clear distinction.
+
+You have seen the essence of the tidyverse: **_clean chained workflows_**.
+
+The sections below are copied (and adapted) for a large part from the `dplyr` vignette which can be found [here](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html)
+
+
+
+Dplyr aims to provide a function for each basic verb of data manipulation:
+
+`filter()` to select cases (rows) based on their values.
+`arrange()` to reorder the cases.
+`select()` and `rename()` to select variables (columns) based on their names.
+`mutate()` and `transmute()` to add new variables that are functions of existing variables.
+`summarise()` to condense multiple values to a single value.
+`sample_n()` and `sample_frac()` to take random samples.
+
+## Selecting: `filter()` and `distinct()`
+
+The filter function `filter()` allows you to select a subset of rows in a data frame. The first argument is the tibble or data frame. The second and subsequent arguments refer to variables within that data frame, selecting rows where the expression is TRUE.
+
+
+```{r}
+dose_response_long %>% distinct(sex, Dose, .keep_all = T)
+```
+
+
+
+
 
