@@ -2,6 +2,7 @@
 
 
 ```{r, include=FALSE}
+options(digits = 3)
 knitr::opts_knit$set(cache = TRUE,
                      tidy = TRUE,
                      tidy.opts = list(blank = FALSE, width.cutoff = 60))
@@ -262,6 +263,19 @@ The function `separate()` will split on the non-word chracter if no separator is
 tmp <- data.frame(x = 10:15, a = paste0(1:6, "zXb", letters[1:6]))
 tmp
 separate(data = tmp, col = a, sep = ".X.", into=c("b", "c"))
+```
+
+## combine columns
+
+When you have two columns that should be logically combined into one, use the `unite()` function.
+For instance, dates and times are often placed in separate columns but they are two aspects of a single measurement: time.
+Here is a small example. In a later presentation, working with dates and times will be extensively treated.
+
+```{r}
+activity <- data.frame(date = c("30/12/2019", "31/12/2019", "01/01/2020", "02/01/2020", "02/01/2020"),
+                 time = c("14:55", "21:01", "08:22", "11:56", "16:38"),
+                 activity = c(34, 48, 5, 19, 22))
+unite(activity, "datetime", date, time, sep = "T")
 ```
 
 ## Drop rows with missing values: `drop_na()`

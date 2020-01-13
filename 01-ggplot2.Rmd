@@ -1,6 +1,7 @@
 # The `ggplot2` package {#ggplot2}
 
 ```{r, include=FALSE}
+options(digits = 3)
 ## Utility functions: show_palette()
 source("scripts/utils.R")
 knitr::opts_knit$set(cache = TRUE,
