@@ -1,2 +1,0 @@
-# Sampling, testing, modeling {#sampling-testing-modeling}
-

@@ -1,0 +1,247 @@
+# Processing text with: `stringr` and regex {#stringr}
+
+```{r, include=FALSE}
+options(digits = 3)
+knitr::opts_knit$set(cache = TRUE,
+                     tidy = TRUE,
+                     tidy.opts = list(blank = FALSE, width.cutoff = 60))
+library(stringr)
+```
+
+## Introduction 
+
+This is the last presentation in the tidyverse series. It revolves around processing textual data: finding, extracting, and replacing patterns. Central to this task is **_pattern matching_** using regular expressions. Pattern matching is the process of finding, locating, extracting and replacing patterns in character data that usually cannot be literally described. **_Regular expression syntax_** is the language in which patterns are described in a wide range of programming languages, including R. 
+
+This topic has been dealt with in an introductory manner previously (course DAVuR1). And is repeated and expanded here. Instead of the base R functions we now switch to the `stringr` package.
+
+As all packages from the tidyverse, `stringr` has many many functions (type `help(package = "stringr")` to see which). this package has a great [cheat sheet](graphics/stringr.pdf) as well.
+
+Here, a few of them will be reviewed.
+
+### A few remarks on "locale"
+
+Many functions of the tidyverse packages related to time and text (and currency) accept arguments specifying the **_locale_**.
+The locale is a container for all location-specific display of information.  
+Think  
+
+- Character set of the language
+- Time zone, Daylight savings time
+- Thousands separator and decimal symbol
+- Currency symbol
+
+Dealing with locales is a big challenge indeed for any programming language. However, since this is only an introductory course we will stick to US english and work with the current locale for times only.
+This note is to make you aware of the concept so that you remember this when the appropriate time comes.
+
+## Review of regular expressions
+
+Many of the `stringr` functions take regular expression as one of the arguments.
+Regular expression syntax has been dealt with in a previous course/resentation. For your convenience, an overview is presented here as well.
+
+### Regex syntax elements
+
+A regex can be build out of any combination of  
+
+- **character sequences** - Literal sequences, such as 'chimp'
+- **character classes** - A listing of possibilities for a single position.  
+- **alternatives** - Are defined by the pipe symbol `|`. 
+- **quantifiers** - How many times the preceding block should occur. 
+- **anchors** - `^` means matching at the start of a string. `$` means at the end.
+
+The [stringr cheat sheet](graphics/stringr.pdf) also contains a summary of regex syntax.
+
+### Character classes and negation
+
+Characters classes -groups of matching characters for a single position- are placed between brackets: `[adgk]` means 'a' or 'd' or 'g' or 'k'. Use a hyphen to create a series: `[3-9]` means digits 3 through 9 and `[a-zA-Z]` means all alphabet characters.  
+
+Character classes can be negated by putting a `^` at the beginning of the list: `[^adgk]` means anything _but_ the letters a, d, g or k.
+
+There is a special character
+
+Since character classes such as `[0-9]` accur so frequently they have dedicated character classes -also called **_metacharacters_**- such as `[[:digit:]]` or (equivalently) `\\d`. The most important other ones are these 
+
+
+- **any character** (wildcard) is specified by `.`. If you want to search for a literal dot, you need to **_escape_** its special meaning using two backslashes: `\\.`
+- **digits** `[[:digit:]]` or `\\d`: equivalent to `[0-9]`
+- **alphabet characters** `[[:alpha:]]`: equivalent to `[a-zA-Z]`
+- **lowercase characters** `[[:lower:]]`: equivalent to `[a-z]`
+- **uppercase characters** `[[:upper:]]`: equivalent to `[A-Z]`
+- **whitespace characters** `[[:space:]]` or `\\s`: Space, tab, vertical tab, newline, form feed, carriage return
+- **punctuation characters** `[[:punct:]]`: One of !"#$%&’()*+,-./:;<=>?@[]^_`{|}~
+
+(have a look at the cheat sheet for all) 
+
+### Quantifiers
+
+Quantifiers specify how often a (part of) a pattern should occur.
+
+- **`*`**: 0 or more times
+- **`+`**: 1 or more times
+- **`?`**: 0 or 1 time
+- **`{n}`**: exactly `n` times
+- **`{n,}`**: at least `n` times
+- **`{,n}`**: at most `n` times
+- **`{n, m}`**: at least `n` and at most `m` times. 
+
+The `*` zero or more times and `?` zero or one time quantifiers are sometimes confusing. Why zero? A good example is the Dutch postal code. These are all valid postal codes  
+
+```{r}
+pc <- c("1234 AA", "2345-BB", "3456CC", "4567 dd")
+pc
+```
+
+and therefore a pattern could be `"\\d{4}[ -]?[a-zA-Z]{2}"` where the question mark specifies that either a space or a hyphen may occur zero or one time: It may or may not be present. 
+
+The `stringr` package provides two nice utility functions to visualize regex matches in a character: `str_view_all()` and `str_view()`. The difference is that the latter function only shows the first match - if present. 
+
+```{r}
+str_view_all(pc, "^\\d{4}[ -]?[a-zA-Z]{2}$")
+```
+
+As you can see, the last element ("56789aa") is not a good postal code.
+
+Note that `[a-zA-Z]` could have been replaced by `[[:alpha:]]`.
+
+### Anchoring
+
+Using anchoring, you can make sure the matching string is not longer than you explicitly state. 
+
+- `^` anchors a pattern to the start of a string
+- `$` anchors a regex to the end of a string
+
+```{r}
+sntc <- "the path of the righteous man is beset on all sides by the iniquities of the selfish,  and the tyranny of evil men. --quote from?"
+
+str_view(sntc, "evil") ##matches
+str_view(sntc, "evil$") ## does not match
+```
+
+### Alternatives 
+
+To apply two alternative choices for a single regex element you use the pipe symbol `|`. You can us parentheses `(foo[])` to fence alternatives off.
+
+```{r}
+str_view_all(sntc, "(y\\s)|(\\sf)")
+```
+
+
+## The `stringr` essentials
+
+
+### Case conversion
+
+These functions all change the capitalization of (some of) the word characters of an input string. They all ignore non-word characters such as punctiuation and other symbols.
+
+- `str_to_upper()` converts all word characters to uppercase
+- `str_to_lower()` converts all word characters to lowercase
+- `str_to_title()` capitalizes all first characters of words
+- `str_to_sentence()` capitalizes the first character in the string, not after every period
+
+
+```{r}
+str_to_title(sntc)
+str_to_sentence(sntc)
+```
+
+### Split, join and substring
+
+Combining two vectors into one, one vector into one, or doing the reverse: splitting. These are all string-based operation that are carried out in scripting quite often.
+
+Here are some joining operations, using `str_c()`:
+
+```{r}
+l1 <- letters[1:5]
+l2 <- letters[6:10]
+
+str_c(l1, collapse = "=")
+str_c(l1, l2, sep = "+")
+str_c(l1, l2, sep = "+", collapse = "=")
+```
+
+When you want to combine variables and text `str_glue()` comes in handy:
+
+```{r}
+str_glue("The value of pi is {pi} and the first month of the year is {month.name[1]}")
+```
+
+This is a more friendly approach than with `paste()`.
+
+**Splitting** is slightly more tricky since it accepts a regex pattern as split argument. For instance, you can get the words of a sentence by splitting like this:
+
+```{r, results = "hold"}
+words <- str_split(sntc, "([[:punct:]]|[[:space:]])+")
+words
+##alternative
+#str_split(sntc, "[^a-zA-Z]+")
+```
+
+There are two ways to get parts of character strings, or **_substrings_**. The first is by index. You can omit both `start` and `end` arguments; they will deault to start and end of the string, respectively.
+
+```{r}
+nucs <- c("Adenine", "Guanine", "Cytosine", "Thymine")
+str_sub(nucs, end = 3)
+```
+
+You can even use this function to change the substring that is removed
+```{r}
+str_sub(nucs, start = 4) <- "......"
+nucs
+```
+
+This does not work with literals! The following chunk gives and error:
+
+```{r error = TRUE}
+str_sub(c("Adenine", "Guanine", "Cytosine", "Thymine"), start = 4) <- "......"
+```
+
+
+### Matching
+
+When you **match** a pattern to a string, you usuially want to know **_if_** it is there, **which** elements have it, **_where_** it is located in those elements or **_how often_** it is present. For each of these question there is a dedicated function:
+
+```{r include = FALSE}
+fruits <- c("Banana", "Apple", "Orange", "Cherry")
+```
+
+- `str_detect(string, pattern)` detects the presence of a pattern match in a string. 
+    ```{r}
+    str_detect(fruits, "[Aa]")
+    ```
+
+- `str_subset(string, pattern)` returns only the strings that contain a pattern match
+    ```{r}
+    str_subset(fruits, "[Aa]")
+    ```
+
+- `str_which(string, pattern)` finds the indexes of strings that contain a pattern match.
+    ```{r}
+    str_which(fruits, "[Aa]")
+    ```
+
+- `str_count(string, pattern)` counts the number of matches in a string.
+    ```{r}
+    str_count(fruits, "[Aa]")
+    ```
+
+- `str_locate(string, pattern)` and `str_locate_all(string, pattern)` locate the positions of pattern matches in a string
+
+    ```{r}
+    str_locate_all(fruits, "[Aa]")
+    ```
+
+### Extracting and replacing
+
+If you want to obtain the character sequences matching your pattern you can use the `str_extract()` and `str_extract_all()` functions:
+
+```{r}
+str_extract_all(fruits, "an")
+```
+
+Finally, replacing occurrences of a pattern is carried out using `str_replace()` or `str_replace_all()`.
+
+```{r}
+str_replace_all(fruits, "an", "..")
+```
+
+
+
+

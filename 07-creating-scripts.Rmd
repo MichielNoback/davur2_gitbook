@@ -1,4 +1,0 @@
-# Creating programs {#programming}
-
-- Function design and implementation
-- 
