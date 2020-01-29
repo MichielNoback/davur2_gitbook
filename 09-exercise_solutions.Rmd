@@ -1,0 +1,85 @@
+# Exercise Solutions {#exercise-solutions}
+
+```{r, include=FALSE}
+options(digits = 3)
+knitr::opts_knit$set(cache = TRUE,
+                     tidy = TRUE,
+                     tidy.opts = list(blank = FALSE, width.cutoff = 60))
+```
+
+
+## Introduction
+
+Only solutions chunks are displayed here, not the output.
+
+## `ggplot2`
+
+### The dinos
+
+#### export to csv
+
+This exercise has no code. I exported the data and placed the csv files under `data/dinos/` of this repo.
+
+#### clean up and load `codebook.csv`
+
+Non-data lines were deleted. Lines 1-18 relate to skeleton data and 19-29 to footprint data. 
+
+**1. Load the resulting file and assign it to variable `codebook`.**  
+
+The separator is ": " but it is not possible to define multi-character separators in `read.table()`. For now, simply use ":".
+
+```{r results = 'hide'}
+codebook_file <- "data/dinos/codebook.csv"
+(codebook <- read.table(codebook_file, 
+                      sep = ":",
+                      stringsAsFactors = FALSE))
+```
+
+**2. Give the dataframe column names: `variable` and `description`.**
+
+```{r results = 'hide'}
+names(codebook) <- c('variable', 'description')
+```
+
+
+**3. Remove the leading space of the second column **
+
+```{r results = 'hide'}
+codebook$description <- sub('^ ', '', codebook$description)
+```
+
+**4. Add a column called `dataset`: a factor with the value `skeleton` or `footprint`, depending on the file that is referred to.**
+
+```{r results = 'hide'}
+codebook$dataset <- c(rep('skeleton', 18), rep('footprint', 11))
+```
+
+#### Write a utility function
+
+```{r}
+get_description <- function(column_name, dataset = 'skeleton') {
+    if (! is.element(dataset, codebook$dataset)) {
+        stop(paste0('dataset ', dataset, ' does not exist'))
+    }
+    if (! is.element(column_name, codebook$variable)) {
+        stop(paste0('column ', column_name, ' does not exist'))
+    }
+    ##return the value
+    codebook[codebook$dataset == dataset & codebook$variable == column_name, "description"]
+}
+get_description('Dinosaur_gen', 'skeleton')
+```
+
+#### Load skeleton data
+
+```{r results = 'hide'}
+skeleton_file <- "data/dinos/skeletons.csv"
+
+(skeleton <- read.table(skeleton_file, 
+                        sep = ";",
+                        header = TRUE,
+                        dec = ",",
+                        as.is = 1))
+```
+
+

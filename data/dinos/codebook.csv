@@ -1,0 +1,29 @@
+Formation: the geological formation in which the fauna occurs
+Epoch: the epoch within which the formation occurs (according to current literature)
+Stage: the geological stage of which the epoch is a part
+Midpoint: the exact age date of the midpoint of the epoch in question
+Archosauromorph_gen: Number of genera of Archosauromorpha
+Dinosaur_gen: Number of genera of Dinosauria
+Synapsid_gen: Number of genera of Synapsida
+Parareptile_gen: Number of genera of Parareptilia
+Temnospondyl_gen: Number of genera of Temnospondyli
+Other_gen: Number of genera not belonging to any of the above clades
+Total_gen: Total number of tetrapod genera (sum of the above)
+Archosauromorph_spec: Number of specimens of Archosauromorpha
+Dinosaur_spec: Number of specimens of Dinosauria
+Synapsid_spec: Number of specimens of Synapsida
+Parareptile_spec: Number of specimens of Parareptilia
+Temnospondyl_spec: Number of specimens of Temnospondyli
+Other_spec: Number of specimens not belonging to any of the above clades
+Total_spec: Total number of tetrapod specimens (sum of the above)
+Formation: the geological formation in which the fauna occurs
+Epoch: the epoch within which the formation occurs (according to current literature)
+Stage: the geological stage of which the epoch is a part
+Midpoint: the exact age date of the midpoint of the epoch in question
+Nondinosauromorph_archosaurs: Number of ichnogenera assigned to Archosauromorpha, excluding Dinosauromorpha
+Synapsida: Number of ichnogenera assigned to Synapsida
+Other_tetrapod: Number of ichnogenera assigned to other tetrapod groups
+Basal_Neodiapsida: Number of ichnogenera assigned to basal Neodiapsida
+Nondinosaur_Dinosauromorpha: Number of ichnogenera assigned to nondinosaurian Dinosauromorpha
+Dinosauria: Number of ichnogenera assigned to Dinosauria
+Total_gen: Total number of tetrapod ichnogenera (sum of the above)

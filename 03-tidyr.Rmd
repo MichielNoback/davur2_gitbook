@@ -35,7 +35,7 @@ Let's start with the first: measles.
 Here is part of the measles data. It is not tidy. Why not?
 
 ```{r load-measles, echo=F}
-measles <- read.table("data/measlescasesbycountrybymonth.csv", sep=";", header = T)
+measles <- read.table("data/measles/measlescasesbycountrybymonth.csv", sep=";", header = T)
 knitr::kable(measles[1:15, 1:7], caption = "Why is this not tidy?")
 ```
 

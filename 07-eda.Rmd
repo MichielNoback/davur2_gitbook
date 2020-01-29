@@ -558,6 +558,12 @@ A method not discussed before is **_binning_**, With binning, you cluster the in
 baseplot_sp + geom_bin2d(na.rm=T)
 ```
 
+Here is a variation of binning - the hexagonal bin (requires package `hexbin`):
+
+```{r}
+library(hexbin)
+baseplot_sp + geom_hex(na.rm=T)
+```
 
 ## Look for patterns with the dependent variable
 
@@ -574,8 +580,7 @@ clean_data %>% filter(num.partners < 25 ) %>%
     geom_smooth(method="loess", na.rm=T)
 ```
 
-Again, the 
-map comes in handy
+Again, the heatmap comes in handy. Start with creating the matrix.
 
 ```{r}
 selection <- c("num.partners", "first.sex", "num.preg", "horm.contracept.years", "IUD.years", "STDs.number", "target.biopsy")
@@ -586,30 +591,31 @@ cor_matrix <- cor(tmp)
 
 #colnames(cor_matrix) <- target_names
 cor_matrix <- as_tibble(cor_matrix)
-(cor_matrix <- cor_matrix %>% mutate(selection = selection) %>% select(8, 1:7))
+(cor_matrix <- cor_matrix %>% mutate(var1 = selection) %>% select(8, 1:7))
 ```
 
-```{r 
-map2, fig.asp=.9, out.width='70%', fig.align='center', fig.cap="A correlation 
-map of the four explanatory variables"}
-cor_matrix_long <- gather(cor_matrix, key = "variable", value = "correlation", selection)
-ggplot(data = cor_matrix_long, aes(x=selection, y=variable, fill=correlation)) + 
+And then create the plot. Here I used `pivot_longer()` instead of `gather()` to obtain the longer format required for ggplot2.
+
+```{r heatmap2, fig.asp=.9, out.width='100%', fig.align='center', fig.cap="A heatmap pairwise correlation of selected numeric variables"}
+cor_matrix_long <- pivot_longer(data = cor_matrix, cols = selection, names_to = "variable", values_to = "cor")
+ggplot(data = cor_matrix_long, aes(x=var1, y=variable, fill=cor)) + 
     geom_tile() + 
     labs(x=NULL, y=NULL) + 
     scale_fill_gradient(high = "red", low = "white" )
 ```
 
+As you can see, there is hardly any correlation between these numeric variables, and not with the target (dependent) variable `target.biopsy` either. This is not a hopeful result when the goal is to be able to predict cervical cancer occurrence.
+
 ## Density plots show class distinction
 
-A density plot will often quickly reveal whether there is promise in 
-a variable. I'll demonstrate with the `iris` dataset.
+A density plot, split over the categories of your target variable, will often quickly reveal whether there is promise in a variable. I'll demonstrate with the `iris` dataset since the cervical cancer dataset is not so nice in that respect.
 
 ```{r, fig.width=6.5, fig.height=3.5}
 ggplot(iris, aes(x=Petal.Length)) + geom_density(aes(color=Species))
 ```
 In this plot, you can see that Setosa separates quite nicely, by the other two don't.
 
-## The 'xor' problem
+### The 'xor' problem
 
 The density approach is not flawless! Consider this:
 
@@ -624,26 +630,24 @@ ggplot(data=df, mapping=aes(x=dosage)) + geom_density(aes(color=patient_type))
 This looks like there is little to win, doesn't it?  
 Here's another view of the same data!
 
-----
 
 ```{r, fig.width=6.5, fig.height=3.5}
 ggplot(df, aes(x=dosage, y=response)) + geom_point()
 ```
-Still not interesting!  
-Give it one more shot:
+Still not interesting!  Give it one more shot:
 
-----
 
 ```{r, fig.width=6.5, fig.height=3.5}
 ggplot(df, aes(x=dosage, y=response, color=patient_type)) + geom_point()
 ```
 
+This is called the **_XOR_** problem because the cases follow an "Exclusive Or" rule.
 
-# Advanced Explorations
+## Advanced Explorations
 
-## PCA
+### PCA
 
-Here are the irises again.
+First PCA will be shown with the iris dataset and then with the cervical cancer dataset.
 
 ```{r echo=TRUE}
 ir.pca <- prcomp(iris[, -5],
@@ -652,15 +656,12 @@ ir.pca <- prcomp(iris[, -5],
 print(ir.pca)
 ```
 
-## Plot variances
-
 The plot method returns a plot of the variances (y-axis) associated with the PCs (x-axis). 
 
 ```{r echo=TRUE}
 plot(ir.pca, type = "l")
 ```
 
-## Summary
 
 The summary method describe the importance of the PCs.
 
@@ -668,38 +669,67 @@ The summary method describe the importance of the PCs.
 summary(ir.pca)
 ```
 
-## The PC plot
-
-```{r, include=FALSE}
-#library(devtools)
-#install_github("vqv/ggbiplot")
-
-library(ggbiplot)
-g <- ggbiplot(ir.pca, obs.scale = 1, var.scale = 1, 
-              groups = iris[,5], ellipse = FALSE, 
-              circle = TRUE)
-g <- g + scale_color_discrete(name = '')
-g <- g + theme(legend.direction = 'horizontal', 
-               legend.position = 'top')
-```
+The PC plot
 
 ```{r}
-print(g)
+library(ggbiplot)
+ggbiplot(ir.pca, obs.scale = 1, var.scale = 1, 
+              groups = iris[,5], ellipse = FALSE, 
+              circle = TRUE) + 
+    scale_color_discrete(name = '') +
+    theme(legend.direction = 'horizontal', legend.position = 'top')
 ```
 
 
-## Clustering
+Now the same procedure for the cervical cancer dataset, with a selection of numverical vaiables.
+
+
+```{r echo=TRUE}
+selection <- c("num.partners", "first.sex", "num.preg", "horm.contracept.years", "IUD.years", "STDs.number", "target.biopsy")
+tmp <- clean_data %>% select(selection) %>% drop_na()
+tmp
+cc.pca <- prcomp(tmp[, -7],
+                 center = TRUE,
+                 scale. = TRUE)
+print(cc.pca)
+```
+
+
+The plot method returns a plot of the variances (y-axis) associated with the PCs (x-axis). 
+
+```{r echo=TRUE}
+plot(cc.pca, type = "l")
+```
+
+
+The summary method describe the importance of the PCs.
+
+```{r echo=TRUE}
+summary(cc.pca)
+```
+
+PC plot
+
+```{r pca2, fig.asp=1.3, out.width='100%', fig.align='center', fig.cap="A PCA plot of the numerical variables"}
+ggbiplot(cc.pca, obs.scale = 1, var.scale = 1, 
+              groups = tmp$target.biopsy, ellipse = FALSE, 
+              circle = TRUE, alpha = 0.5) + 
+    scale_color_discrete(name = '') + 
+    theme(legend.direction = 'horizontal', legend.position = 'top')
+```
+
+This is very promising neither; no structure in the data, not in general and not in relation with the dependent variable.
+
+### Clustering
 
 - Using clustering, you can sometimes see obvious patterns in the data.  
 - Most obvious are:  
     - k-Means clustering
     - Hierarchical clsutering
     
-## k-Means clustering
+### k-Means clustering
 
 k-means is very sensitive to the scale of your data so you'll need to normalize it.
-
-## k-Means clustering
 
 ```{r}
 #km_clusters <- kmeans()
@@ -707,5 +737,5 @@ k-means is very sensitive to the scale of your data so you'll need to normalize 
 ```
 
 
-
+### hierarchical clustering
 
