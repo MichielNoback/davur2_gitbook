@@ -14,6 +14,11 @@ Only solutions chunks are displayed here, not the output.
 
 ## `ggplot2`
 
+```{r}
+library(ggplot2)
+library(tidyr)
+```
+
 ### The dinos
 
 #### export to csv
@@ -82,4 +87,64 @@ skeleton_file <- "data/dinos/skeletons.csv"
                         as.is = 1))
 ```
 
+
+#### Plot species versus time
+
+Note the use of the utility function previously created, `get_description()`.
+
+```{r species-vs-time, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="A first visualization"}
+ggplot(data = skeleton,
+       mapping = aes(x = Midpoint, y = log2(Total_spec))) +
+    geom_point(aes(color = Epoch)) + 
+    geom_smooth(method = "loess") +
+    xlab(get_description("Midpoint")) +
+    ylab(paste0("log2 of ", get_description("Total_spec"))) +
+    scale_x_reverse()
+    
+```
+
+#### Reproducing the publication figure
+
+**Part 1. calculate the proportions**
+
+We have not yet dealt with `dplyr` so we'll use base R for this. Note that the column `Total_gen` already contains the sum of all tetrapods.
+
+```{r}
+skeleton$genera_prop <- (skeleton$Dinosaur_gen / skeleton$Total_gen)*100
+skeleton$specimen_prop <- (skeleton$Dinosaur_spec / skeleton$Total_spec)*100
+```
+
+**Part 2. calculate the mean of the proportions**
+
+```{r results = 'hide'}
+skeleton_proportions <- aggregate(cbind(genera_prop, specimen_prop) ~ Epoch + Stage + Midpoint, 
+          data = skeleton,
+          FUN = mean)
+```
+
+**Part 3. flatten" the data**
+
+```{r results = 'hide'}
+skeleton_proportions_long <- pivot_longer(data = skeleton_proportions, 
+             names_to = "level", 
+             values_to = "Proportion", 
+             cols = ends_with("_prop"))
+```
+
+**Part 4. generate the plot**
+
+First it needs to be flattened for use in ggplot2:
+
+```{r plot-reprodiction1, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="A reproduction"}
+
+ggplot(data = skeleton_proportions_long,
+       mapping = aes(x = Midpoint, y = Proportion, color = level)) +
+    geom_point() +
+    scale_x_reverse() +
+    scale_color_manual(values = c("blue", "red")) +
+    xlab("Geological age (Myr)") +
+    annotate("point", x = 231, y = 1, shape = 23, size = 5, fill = "goldenrod1") +
+    annotate("text", x = 231, y = -3, label = "CPE")
+
+```
 

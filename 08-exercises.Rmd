@@ -20,6 +20,8 @@ The solutions to the exercises are in the next chapter of this eBook.
 
 ### The dinos
 
+This exercise represents a review of many of basic R operations as well, besides ggplot2.
+
 The `dinos` folder contains an Excel file called `jgs2018049_si_001.xlsx`. It contains supplementary data to a scientific publication with the title "The Carnian Pluvial Episode and the origin of dinosaurs" [Benton et al., Journal of the Geological Society 175(6) 2018].  
 
 One of the figures accompanying the paper is this one:
@@ -70,9 +72,42 @@ As extra challenge you could implement some error checking to make the function 
 
 Load the data in the `skeletons.csv` file and assign it to variable `skeleton`. Make sure your data columns have the right type and that you did not overlook NA value or decimal encodings.
 
-#### A first plot
+#### Plot species versus time
 
+As a first exploration of the data, create a scatterplot of `Total_spec` as a function of `Midpoint` (the midpoint of the archaeological epoch) and have the points colored by `Epoch`. You should use ggplot2 of course.
+There is an outlier flattening the picture quite a lot. Can you think of a strategy to make the picture clearer?
+Another problem is that the x-axis scale is from recent to ancient and this should be reversed.
 
+Finally, add a smoother (loess regression) for the entire dataset (not split over the Epochs!) and annotate the plot with nice axis labels, preferably using your previously created utility function. 
+NB: it may be a good idea to tweek the descriptions in the codebook a little bit.
+
+Note that for "Million Years Ago" you can use the abbreviations "MYA" or "Ma" (Mega annum).
+
+#### Reproducing the publication figure
+
+Reproduce the figure from the introduction of this section, but using ggplot2 instead of base R. This requires a few preprocessing steps.   
+
+**Part 1**  
+You will have to calculate the proportions of Dinosauria (`Dinosaur_gen`) relative to the total of all "tetrapod" groups (including `Archosauromorph_gen`, `Dinosaur_gen`, `Synapsid_gen`, `Parareptile_gen`, `Temnospondyl_gen`). You need this for Specimens (`_spec`) as well as Genera (`_gen`).  
+
+**Part 2**  
+Next, you should extract a single proportion for all Formations represented in a single `Midpoint`. I realise that this is not an entirely valid operation. Do you know why? Can you figure out how it was done for the erxisting publication plot?  
+I suggest you use the `aggregate()` function. You will need the Epoch and Stage of these as well for later aspects of plotting. 
+
+**Part 3**  
+Now you need to "flatten" the data using `spread()` or -preferably- `pivot_longer()`.
+
+**Part 4**  
+Finally you have the data to generate the plot itself, without the moving average. 
+
+**Part 5 [challenge]**
+Add the moving average. The paper does not say anythong about the "window" used in the moving average (look up "moving averaghe" on Wikipedia), but looking at the original figure it is less that 10 MY wide. Puzzlingly, the line around 215 MYA seems te be not correct at all. 
+
+#### Making a better figure
+
+Next, try to make a plot that uses an alternative to the _moving average_ used in the publication. Also, use background coloring to highlight the Epochs within the plot.
+
+Use the size aesthetic for indicating the absolute number.
 
 
 

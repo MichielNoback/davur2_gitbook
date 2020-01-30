@@ -1,7 +1,7 @@
 Formation: the geological formation in which the fauna occurs
-Epoch: the epoch within which the formation occurs (according to current literature)
+Epoch: The epoch within which the formation occurs
 Stage: the geological stage of which the epoch is a part
-Midpoint: the exact age date of the midpoint of the epoch in question
+Midpoint: The midpoint of the epoch in question (Ma)
 Archosauromorph_gen: Number of genera of Archosauromorpha
 Dinosaur_gen: Number of genera of Dinosauria
 Synapsid_gen: Number of genera of Synapsida
@@ -15,7 +15,7 @@ Synapsid_spec: Number of specimens of Synapsida
 Parareptile_spec: Number of specimens of Parareptilia
 Temnospondyl_spec: Number of specimens of Temnospondyli
 Other_spec: Number of specimens not belonging to any of the above clades
-Total_spec: Total number of tetrapod specimens (sum of the above)
+Total_spec: Total number of tetrapod specimens
 Formation: the geological formation in which the fauna occurs
 Epoch: the epoch within which the formation occurs (according to current literature)
 Stage: the geological stage of which the epoch is a part

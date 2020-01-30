@@ -571,7 +571,7 @@ This section describes aspects that fall outside the standard realm of plot cons
 
 ### Scales and Coordinates {-}
 
-Scales and Coordinates are used to adjust the way your data is mapped and displayed. Here, a log10 scale is applied to the y axis and the x axis is reversed.
+Scales and Coordinates are used to adjust the way your data is mapped and displayed. Here, a log10 scale is applied to the y axis using `scale_y_log10()` and the x axis is reversed (from high to low values instead of low to high) using `scale_x_reverse()`.
 
 ```{r tweeking, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data = cars, mapping = aes(x = speed, y = dist)) + 
