@@ -172,6 +172,8 @@ two_two_col_long <- cbind(two_two_col, two_cols)
 tmp$TreatTime <- NULL
 ```
 
+### Use `pivot_longer()` as versatile alternative to `gather()`
+
 The tidyr package has a recent addition called `pivot_longer` which is specifically tailored for this kind of task. It requires a bit of knowledge of regular expressions though:
 
 ```{r}
@@ -217,6 +219,41 @@ alt <- pivot_longer(data = measles,
 knitr::kable(head(alt, 8))
 ```
 
+
+Beware that the columns are ordered correctly!! Here are two examples, where the first works as expected but the second does not because the columns are in a different order:
+
+```{r}
+exmpl <- tibble(
+    names = letters[1:3], 
+    foo_bar = 1:3, 
+    foo_baz = 4:6, 
+    zam_bar = 7:9, 
+    zam_baz = 10:12)
+pivot_longer(
+    data = exmpl, 
+    cols = matches("_"), 
+    names_pattern = "(foo|zam)_",
+    values_to = c("bar", "baz"), 
+    names_to = "lvl")
+```
+As expected. But look at this one:
+
+```{r}
+exmpl <- tibble(
+    names = letters[1:3], 
+    foo_bar = 1:3, 
+    zam_bar = 7:9, 
+    foo_baz = 4:6, 
+    zam_baz = 10:12)
+pivot_longer(
+    data = exmpl, 
+    cols = matches("_"), 
+    names_pattern = "(foo|zam)_",
+    values_to = c("bar", "baz"), 
+    names_to = "lvl")
+```
+
+If you don't know about this (as I did) it may take you several hours to figure this out (as I did).
 
 ## Widening with `spread()` and `pivot_wider()`
 

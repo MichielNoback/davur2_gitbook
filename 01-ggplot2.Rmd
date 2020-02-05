@@ -25,6 +25,8 @@ You should always remember the purpose with which you create a plot:
 
 Besides this, you should of course choose a relevant visualization for your data. For instance, generating a boxplot representing only a few data points is a poor choice, as will a scatterplot for millions of data points almost always be.
 
+To help your imagination and see what is possible you should really browse through [The R Graph Gallery](https://www.r-graph-gallery.com/). It has code for all the charts in the gallery.
+
 ## Getting started
 
 Install the packages `ggplot2` and `tidyr` first, if not already installed. The package ggplot2 is the topic of this chapter of course. Package tidyr is the topic of a later chapter, but we'll see a use case of it here already.
@@ -569,7 +571,7 @@ Maybe new questions have arisen as a result of the plot you created?
 
 This section describes aspects that fall outside the standard realm of plot construction.
 
-### Scales and Coordinates {-}
+### Scales, Coordinates and Annotations {-}
 
 Scales and Coordinates are used to adjust the way your data is mapped and displayed. Here, a log10 scale is applied to the y axis using `scale_y_log10()` and the x axis is reversed (from high to low values instead of low to high) using `scale_x_reverse()`.
 
@@ -641,4 +643,29 @@ ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
 As you can see, there are `element_text()`, `element_line()` and `element_rect()` functions to specify these types opf plot elements. The `element_blank()` function can be used in various theme aspects to prevent it from being displayed.
 
 
- 
+### Annotation {-}
+
+A final layer that can be added one containing **_annotations_**. Annotations are elements that are added manually to the plot. This can be a text label, a fictitious data point, a shaded box or an arrow indicating a region of interest.  
+
+In the `annotate()` method, you specify the geom you wish to add (e.g. "text", "point")
+The panel below demonstrates a few.
+
+
+```{r annotation, fig.asp=.75, out.width='80%', fig.align='center'}
+(outlier <- airquality[!is.na(airquality$Ozone) & airquality$Ozone > 150, ])
+
+ggplot(data = na.omit(airquality), mapping=aes(x=Temp, y=Ozone)) +
+  annotate("rect", xmin=72, xmax=77, ymin=0, ymax=50, 
+           alpha=0.1, color="blue", fill="blue") +
+  annotate("point", x = outlier$Temp, y = outlier$Ozone, 
+           color = "darkred", size = 4, alpha = 0.3) + 
+  geom_point(mapping=aes(color=Month)) + 
+  geom_smooth(method="loess") +
+  xlab("Temperature (F)") +
+  ylab("Ozone (ppb)") + 
+  annotate("text", x = outlier$Temp, y = outlier$Ozone -5, label = "Outlier") + 
+  annotate("segment", x = outlier$Temp + 5, xend = outlier$Temp + 1, 
+           y = outlier$Ozone + 4, yend = outlier$Ozone, 
+           color = "darkred", size = 2, arrow = arrow()) 
+```
+

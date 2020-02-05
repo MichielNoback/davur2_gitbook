@@ -18,6 +18,73 @@ The solutions to the exercises are in the next chapter of this eBook.
 
 ## `ggplot2`
 
+### Global temperature
+
+Maybe you have seen this picture of the world temperature over the past 120 years:
+
+![global_heatmap_s.png](graphics/global_heatmap_s.png)
+
+The global temperature data are located in folder `global_temperature` (see the [Data Repo](https://github.com/MichielNoback/datasets/tree/master/global_temperature)).
+There are two data series in file [https://raw.githubusercontent.com/MichielNoback/datasets/master/global_temperature/annual.csv](https://raw.githubusercontent.com/MichielNoback/datasets/master/global_temperature/annual.csv). 
+Study the readme file in the same folder to find out their nature.
+
+#### Create a scatter-and-line-plot
+
+Create a scattter-and-line graph of both series in a single plot. Annotate well with labels and title.
+Optionally, add a smoother without error boundaries.
+
+#### Re-create the heatmap
+
+You should try to reproduce the above picture by using the `geom_tile()` function. Hint: use `scale_fill_gradient2(low = "blue", mid = "white", high = "red")` and pass `1` as value for `y` in the mapping function..
+
+#### Extra practice
+
+As extra practice, you could try to answer these questions as well:  
+
+- what is the warmest year?
+- what is the warmest year that both timelines agree upon?
+- which was the coldest decade?
+- what is the 30-year moving average of the temperature?
+
+The is also a monthly temperature file. Many explorations can be carried out on that one as well.
+
+### Epilepsy drug trial
+
+The `epilepsy` folder (see the [Data Repo](https://github.com/MichielNoback/datasets/tree/master/epilepsy)) contains two files, one of which -`epilepsy.csv`- is the actual datafile. The `readme.md` file describes the dataset and the columns. Read it carefully before proceeding.
+
+
+#### Load the data
+
+Load the data and be sure to check the correctness of data types in the columns. The `period` should be a factor. You can use a downloaded copy, but a direct link to the data file can also be used as argument to `read.table()`:
+[https://raw.githubusercontent.com/MichielNoback/datasets/master/epilepsy/epilepsy.csv](https://raw.githubusercontent.com/MichielNoback/datasets/master/epilepsy/epilepsy.csv)
+
+#### Reorganize the data
+
+Reorganize the data so that the dependent variable comes last and the useless `entry` variable is omitted. This order of variables is required:
+`"subject", "age", "base", "treatment", "period", "seizure.rate"`
+For better readability you should convert the dataframe into a `tibble` using `as_tibble()` (tibbles are dealt with in a later chapter: dplyr).
+
+#### Create plots of seizure rates
+
+First, create a **boxplot** of the seizure rates of both groups, split over both the `period` and the `treatment`. To support both of these data dimensions you will either have to use the `color` aesthetic, or the `facet_wrap()` function, like this `+ facet_wrap(. ~ treatment)`. I suggest you try them both.  
+
+Next, create the same basic plot as a **jitter plot**. You can use the `facet_wrap()`. Compare them and write down some pros and cons of both.  
+Investigate whether an **overlay** may improve the story this visualization tells, or can you come up with an even better graph?
+
+#### A boxplot after correction
+
+The `base` column is the base seizure rate of the subject in an 8-week window prior to the actual trial. To compare before and after you should create a new dataframe where the `seizure.rate` is summed for the 4 periods. Next, create a final boxplot of these corrected values.
+
+
+#### Test for statistical significance
+
+In the previous exercise you have determined the corrected seizure rates.
+Can you figure out a statistical test to see if the difference is significant?
+
+#### Investigate age-dependency
+
+Investigate whether there is an age-dependent effect in either the base seizure rate or the effect of the treatment.
+
 ### The dinos
 
 This exercise represents a review of many of basic R operations as well, besides ggplot2.
@@ -26,7 +93,7 @@ The `dinos` folder contains an Excel file called `jgs2018049_si_001.xlsx`. It co
 
 One of the figures accompanying the paper is this one:
 
-![](graphics/Proportions-of-early-dinosaurs-through-the-Triassic-showing-the-rapid-rise-in-the-late.png)
+![](graphics/dino_trend.png)
 
 _**Figure 2**.Proportions of early dinosaurs through the Triassic, showing the rapid rise in the late Carnian and early to middle Norian. Two metrics are shown, numbers of specimens and numbers of genera in 12 sampled faunas, in proportion to all tetrapods; the linking line is a moving average. Specimen counts perhaps exaggerate the trend when compared with generic counts, or at least both show different aspects of the same rise in ecological impact of the dinosaurs in the Late Triassic. (Based on data in supplementary material Table S1.)_
 
@@ -85,7 +152,7 @@ Note that for "Million Years Ago" you can use the abbreviations "MYA" or "Ma" (M
 
 #### Reproducing the publication figure
 
-Reproduce the figure from the introduction of this section, but using ggplot2 instead of base R. This requires a few preprocessing steps.   
+Reproduce the figure from the introduction of this section, but using ggplot2 instead of base R. This requires some preprocessing steps, especially with the use of `pivot_longer()`.   
 
 **Part 1**  
 You will have to calculate the proportions of Dinosauria (`Dinosaur_gen`) relative to the total of all "tetrapod" groups (including `Archosauromorph_gen`, `Dinosaur_gen`, `Synapsid_gen`, `Parareptile_gen`, `Temnospondyl_gen`). You need this for Specimens (`_spec`) as well as Genera (`_gen`).  
@@ -101,13 +168,26 @@ Now you need to "flatten" the data using `spread()` or -preferably- `pivot_longe
 Finally you have the data to generate the plot itself, without the moving average. 
 
 **Part 5 [challenge]**
-Add the moving average. The paper does not say anythong about the "window" used in the moving average (look up "moving averaghe" on Wikipedia), but looking at the original figure it is less that 10 MY wide. Puzzlingly, the line around 215 MYA seems te be not correct at all. 
+Add the moving average. A **_simple moving average_** (SMA) is the unweighted mean of the previous _n_ data.  
+The paper does not say anythong about the "window" (`n`) used in the moving average, but looking at the original figure it is less that 10 MY wide. Actually, to be honest, I cannot identify the used algorithm by looking at the plot. Can you?
+Just give it a shot and see how far you get.
 
-#### Making a better figure
+#### Make a better figure
 
-Next, try to make a plot that uses an alternative to the _moving average_ used in the publication. Also, use background coloring to highlight the Epochs within the plot.
-
-Use the size aesthetic for indicating the absolute number.
+Next, try to make a plot that uses an alternative to the _moving average_ used in the publication. Also, use background coloring (rectangles) to highlight the Epochs within the plot.
 
 
+#### Use the size aesthetic 
 
+The "size" aesthetic can be used for indicating the absolute number of specimens/genera, repsectively. This adds an extra dimension of information to the plot.
+
+
+## `tidyr` and `dplyr`
+
+### Population numbers
+
+
+
+### Rubella and Measles
+
+The `rubella_measles_cases` folder of the `datasets` repo contains 
