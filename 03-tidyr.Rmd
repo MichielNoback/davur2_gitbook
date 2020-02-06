@@ -55,7 +55,7 @@ knitr::kable(head(measles_tidy, n=15))
 
 In the `gather` function, you provide three pieces of information:  
 
-1. The name of the `key`. This is the name of the newly created column that will hold the information that is now present in the column headers that you are going to collect - in this case, the months names Januari-December. Hence, `key = Month`.
+1. The name of the `key`. This is the name of the newly created column that will hold the information that is now present in the column headers that you are going to collect - in this case, the months names January-December. Hence, `key = Month`.
 
 2. The name for `value`. The `value` argument is the name of the column that will hold the actual measurements. In this case, the number of cases from each of the 12 month columns will be "gathered" in this column. Hence, `value = Cases`.
 
@@ -94,7 +94,7 @@ knitr::kable(head(dose_response_long, n = 15))
 save(dose_response_long, file = "data/dose_response_long.Rdata")
 ```
 
-The suffix case works -not surprisingly- with `ends_width()`. Type `tidyselect::` and use autocomplete to find out which helper functions exist for this kind of task. These functions allow you to select variables based on their names, and obviously have a much broader usefullness.
+The suffix case works -not surprisingly- with `ends_width()`. Type `tidyselect::` and use auto complete to find out which helper functions exist for this kind of task. These functions allow you to select variables based on their names, and obviously have a much broader usefulness.
 
 ## A more complex problem: two sets of columns
 
@@ -146,7 +146,7 @@ knitr::kable(two_two_col_long_spl)
 ```
 
 
-The function `separate()` will split on the non-word chracter if no separator is specified; in this case the underscore. This method is discussed separately below (pun intended).
+The function `separate()` will split on the non-word character if no separator is specified; in this case the underscore. This method is discussed separately below (pun intended).
 
 
 The tidyr package provides the **_chaining operator_** `%>%` that makes it possible to combine this into a single statement. We'll see more of this in later chapters:
@@ -185,7 +185,7 @@ alt <- pivot_longer(data = two_two_col,
 knitr::kable(head(alt, 8))
 ```
 
-The expression `names_pattern = "(T.).(Control|Treated)"` tells the function there are two groups in the column names to be widened. These groups are defined by the two sets of parentheses `()`. The first group is defined by the letter "T" followd by a single character specified by the dot `.` which says "any character". The second group is `(Control|Treated)` which tells the function that it is formed by the word Control or Treated. In between is a random single underscore "_".
+The expression `names_pattern = "(T.).(Control|Treated)"` tells the function there are two groups in the column names to be widened. These groups are defined by the two sets of parentheses `()`. The first group is defined by the letter "T" follows by a single character specified by the dot `.` which says "any character". The second group is `(Control|Treated)` which tells the function that it is formed by the word Control or Treated. In between is a random single underscore "_".
 Alternatively, the `names_sep` argument could have been used. For instance, `names_sep = 2` tells to split the column names after the second character, yielding this slightly less aesthetic result:
 
 ```{r}
@@ -294,7 +294,7 @@ knitr::kable(head(tmp, 5))
 
 ## `separate()` columns
 
-The function `separate()` will split on the non-word chracter if no separator is specified. Here a separator is prvided telling to split on an X with two other characters on either side.
+The function `separate()` will split on the non-word character if no separator is specified. Here a separator is prided telling to split on an X with two other characters on either side.
 
 ```{r}
 tmp <- data.frame(x = 10:15, a = paste0(1:6, "zXb", letters[1:6]))
@@ -317,7 +317,7 @@ unite(activity, "datetime", date, time, sep = "T")
 
 ## Drop rows with missing values: `drop_na()`
 
-This function is extremely simple and usefull. It drops rows with missing from a dataframe and returns a cured copy:
+This function is extremely simple and useful. It drops rows with missing from a dataframe and returns a cured copy:
 
 ```{r}
 head(drop_na(airquality))

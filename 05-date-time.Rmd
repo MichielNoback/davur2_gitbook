@@ -208,5 +208,5 @@ ts %>%
 ```
 
 You can define periods, durations and work with time intervals. However, this is outside the scope of this course.
-For this more advanced time math you should refer to the cheat sheet or the offical docs.
+For this more advanced time math you should refer to the cheat sheet or the official docs.
 

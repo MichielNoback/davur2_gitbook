@@ -61,7 +61,7 @@ knitr::kable(head(distress_data_tidy, n = 10), caption = "Tidied data")
 
 ### A first version {-}
 
-This is the first version of the cisualization. The jitter has been created with `geom_jitter`. The plot symbols have been made transparent to keep overlapping points visible. The plot symbols have been made bigger to support embedding in (powerpoint) presentations. A little horizontal jitter was introduced to have less overlap of the symbols, but not too much - the discrete timepoints still stand out well. Vertical jitter omitted since the data are already measured in a continuous scale. A typical use case for vertical jitter is when you have discrete (and few) y-axis measurements.
+This is the first version of the visualization. The jitter has been created with `geom_jitter`. The plot symbols have been made transparent to keep overlapping points visible. The plot symbols have been made bigger to support embedding in (PowerPoint) presentations. A little horizontal jitter was introduced to have less overlap of the symbols, but not too much - the discrete time points still stand out well. Vertical jitter omitted since the data are already measured in a continuous scale. A typical use case for vertical jitter is when you have discrete (and few) y-axis measurements.
 
 ```{r ptsd-jitter-1, fig.asp=.75, out.width='80%', fig.align='center', fig.cap="A first attempt"}
 ggplot(distress_data_tidy, aes(x=Timepoint, y=Stress)) +
@@ -71,7 +71,7 @@ ggplot(distress_data_tidy, aes(x=Timepoint, y=Stress)) +
 
 ### Add mean and SD {-}
 
-To emphasise the trend in the timeseries, means and standard deviations from the mean were added using `stat_summary()`. Always be aware of the orders of layers of your plot! Here, the `stat_summary` was placed "below" the plot symbols. Again, size was increased for enhaced visibility in presentations. Why not the median? Because of the audience! Everybody knows what a mean is, but few know what a median is - especially at management level.
+To emphasize the trend in the timeseries, means and standard deviations from the mean were added using `stat_summary()`. Always be aware of the orders of layers of your plot! Here, the `stat_summary` was placed "below" the plot symbols. Again, size was increased for enhanced visibility in presentations. Why not the median? Because of the audience! Everybody knows what a mean is, but few know what a median is - especially at management level.
 
 ```{r ptsd-jitter-2, fig.asp=.75, out.width='80%', fig.align='center', fig.cap="With mean and standard deviation"}
 mean.sd <- function(x) {
@@ -83,9 +83,9 @@ ggplot(distress_data_tidy, aes(x = Timepoint, y = Stress)) +
     geom_jitter(width = 0.1, size = 2, alpha = 0.6)
 ```
 
-### Emphasise worst cases {-}
+### Emphasize worst cases {-}
 
-To emphasise the development of subjects who were in the worst shape at the onset of the research (T0), the top 25% with respect to distress score at T0 were highlighted.
+To emphasize the development of subjects who were in the worst shape at the onset of the research (T0), the top 25% with respect to distress score at T0 were highlighted.
 
 ```{r ptsd-highlight-worst-at-T0, fig.asp=.75, out.width='80%', fig.align='center', fig.cap="Worst cases emphasised"}
 distress_data$high_at_T0 <- ifelse(distress_data$T0 > quantile(distress_data$T0, 0.75), "Q4", "Q1-Q3")

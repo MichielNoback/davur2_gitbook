@@ -29,13 +29,13 @@ Think
 - Thousands separator and decimal symbol
 - Currency symbol
 
-Dealing with locales is a big challenge indeed for any programming language. However, since this is only an introductory course we will stick to US english and work with the current locale for times only.
+Dealing with locales is a big challenge indeed for any programming language. However, since this is only an introductory course we will stick to US English and work with the current locale for times only.
 This note is to make you aware of the concept so that you remember this when the appropriate time comes.
 
 ## Review of regular expressions
 
 Many of the `stringr` functions take regular expression as one of the arguments.
-Regular expression syntax has been dealt with in a previous course/resentation. For your convenience, an overview is presented here as well.
+Regular expression syntax has been dealt with in a previous course/presentation. For your convenience, an overview is presented here as well.
 
 ### Regex syntax elements
 
@@ -57,7 +57,7 @@ Character classes can be negated by putting a `^` at the beginning of the list: 
 
 There is a special character
 
-Since character classes such as `[0-9]` accur so frequently they have dedicated character classes -also called **_metacharacters_**- such as `[[:digit:]]` or (equivalently) `\\d`. The most important other ones are these 
+Since character classes such as `[0-9]` occur so frequently they have dedicated character classes -also called **_metacharacters_**- such as `[[:digit:]]` or (equivalently) `\\d`. The most important other ones are these 
 
 
 - **any character** (wildcard) is specified by `.`. If you want to search for a literal dot, you need to **_escape_** its special meaning using two backslashes: `\\.`
@@ -129,7 +129,7 @@ str_view_all(sntc, "(y\\s)|(\\sf)")
 
 ### Case conversion
 
-These functions all change the capitalization of (some of) the word characters of an input string. They all ignore non-word characters such as punctiuation and other symbols.
+These functions all change the capitalization of (some of) the word characters of an input string. They all ignore non-word characters such as punctuation and other symbols.
 
 - `str_to_upper()` converts all word characters to uppercase
 - `str_to_lower()` converts all word characters to lowercase
@@ -174,7 +174,7 @@ words
 #str_split(sntc, "[^a-zA-Z]+")
 ```
 
-There are two ways to get parts of character strings, or **_substrings_**. The first is by index. You can omit both `start` and `end` arguments; they will deault to start and end of the string, respectively.
+There are two ways to get parts of character strings, or **_substrings_**. The first is by index. You can omit both `start` and `end` arguments; they will default to start and end of the string, respectively.
 
 ```{r}
 nucs <- c("Adenine", "Guanine", "Cytosine", "Thymine")
@@ -196,7 +196,7 @@ str_sub(c("Adenine", "Guanine", "Cytosine", "Thymine"), start = 4) <- "......"
 
 ### Matching
 
-When you **match** a pattern to a string, you usuially want to know **_if_** it is there, **which** elements have it, **_where_** it is located in those elements or **_how often_** it is present. For each of these question there is a dedicated function:
+When you **match** a pattern to a string, you usually want to know **_if_** it is there, **which** elements have it, **_where_** it is located in those elements or **_how often_** it is present. For each of these question there is a dedicated function:
 
 ```{r include = FALSE}
 fruits <- c("Banana", "Apple", "Orange", "Cherry")

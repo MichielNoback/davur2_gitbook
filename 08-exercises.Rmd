@@ -186,6 +186,8 @@ The "size" aesthetic can be used for indicating the absolute number of specimens
 
 ### Population numbers
 
+The `population` folder of the `datasets` repo contains two files. One of them, `EDU_DEM.....csv` contains population data for all countries of the world (where data is available). We're going to mangle and explore this data a bit.  
+
 
 
 ### Rubella and Measles

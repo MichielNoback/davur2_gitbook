@@ -11,16 +11,16 @@ knitr::opts_knit$set(cache = TRUE,
 
 ## Introduction
 
-In this chapter, we'll explore the package `ggplot2`. Package ggplot2 is one of the most popular packages of R, and a defacto standard for creating publishabe visualizations.
+In this chapter, we'll explore the package `ggplot2`. Package ggplot2 is one of the most popular packages of R, and a de facto standard for creating publishable visualizations.
 
-Whole books have been written about ggplot2 (e.g. [INSERT REF]); these will not be repeated here. Instead, I have selected the minimal amount of information and examples to get you going in your own research visualization endeavours in biomedical research. For that reason, this chapter only deals with the base `ggplot()` function and its most important usage scenarios.  
+Whole books have been written about ggplot2 (e.g. [INSERT REF]); these will not be repeated here. Instead, I have selected the minimal amount of information and examples to get you going in your own research visualization endeavors in biomedical research. For that reason, this chapter only deals with the base `ggplot()` function and its most important usage scenarios.  
 In my opinion, you are best prepared when first learning the ggplot "language" structure, not the complete listing of possibilities. You can check these out later on your own. If you are interested in what the package has to offer, type `help(package="ggplot2")` on the console.
 
 ### Keep the goal in mind {-}
 
 You should always remember the purpose with which you create a plot:
 
-1. **_Communicate results in a visual way_**. The _audience_ consists of other professionals: fellow scientists, students, project managers, CEOs. The _scope_ is in reports, publications, presentations etc. Your plots should be immaculately annotated - have a title and/or caption, axis labels with physical quantities (e.g. Temperature) and measurement units (e.g. Celcius), and a legend (if relevant).
+1. **_Communicate results in a visual way_**. The _audience_ consists of other professionals: fellow scientists, students, project managers, CEO's. The _scope_ is in reports, publications, presentations etc. Your plots should be immaculately annotated - have a title and/or caption, axis labels with physical quantities (e.g. Temperature) and measurement units (e.g. Celsius), and a legend (if relevant).
 2. **_Create a representation of data for visual inspection_**. The _audience_ is yourself. This is especially important in Exploratory Data Analysis (EDA). You visualize your data in order to discover patterns, trends, outliers and to generate new questions and hypotheses. The biggest challenge is to select the correct, most appropriate visualization that keeps you moving on your research track.  
 
 Besides this, you should of course choose a relevant visualization for your data. For instance, generating a boxplot representing only a few data points is a poor choice, as will a scatterplot for millions of data points almost always be.
@@ -117,7 +117,7 @@ ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
 
 ## ggplot2 and the theory of graphics
 
-### Phylosophy of ggplot2 {-}
+### Philosophy of ggplot2 {-}
 
 The author of ggplot2, Hadley Wickham, had a very clear goal in mind when he embarked on the development of this package:
 
@@ -127,9 +127,9 @@ The way this is achieved is through "**_The grammar of graphics_**"
 
 ### The grammar of graphics {-}
 
-The grammar of graphics tells us that a statistical graphic is a mapping from data to geometric objects (points, lines, bars) with aesthetic attributes (colour, shape, size).
+The grammar of graphics tells us that a statistical graphic is a mapping from data to geometric objects (points, lines, bars) with aesthetic attributes (color, shape, size).
 
-The plot may also contain statistical transformations of the data and is drawn on a specific coordinate system. Facetting -grid layout- can be used to generate the same plot for different subsets of the dataset.
+The plot may also contain statistical transformations of the data and is drawn on a specific coordinate system. Faceting -grid layout- can be used to generate the same plot for different subsets of the dataset.
 (Wickham, 2010)
 
 
@@ -261,7 +261,7 @@ Would you proceed with this hypothetical drug?
 
 ## Aesthetics
 
-After you obtain a tidy dataset and pass it to ggplot you must decide what the aesthetics are. This defines the way the data are represented in your plot. Very roughly speaking, you could correlate the aesthetics to the **_dimensions_** of the data you want to visualise. For instance, given this chapters' first example of the airquality dataset, the aesthetics were defined in three "dimensions":  
+After you obtain a tidy dataset and pass it to ggplot you must decide what the aesthetics are. This defines the way the data are represented in your plot. Very roughly speaking, you could correlate the aesthetics to the **_dimensions_** of the data you want to visualize. For instance, given this chapters' first example of the airquality dataset, the aesthetics were defined in three "dimensions":  
 
 - dimension "X" for temperature, 
 - dimension "Y" for Ozone 
@@ -279,15 +279,18 @@ Colors can be defined in a variety of ways:
 
 Below is a panel displaying all named colors you can use in R
 
-```{r color-names, fig.asp=3, echo=FALSE}
-d <- data.frame(c=colors(), y=seq(0, length(colors())-1)%%66, x=seq(0, length(colors())-1)%/%66)
+```{r color-names, fig.asp=3, echo=FALSE, out.width='100%'}
+d <- data.frame(c = colors(), 
+                y = seq(0, length(colors())-1)%%66, 
+                x = seq(0, length(colors())-1)%/%66)
 ggplot() +
 scale_x_continuous(name="", breaks=NULL, expand=c(0, 0)) +
 scale_y_continuous(name="", breaks=NULL, expand=c(0, 0)) +
 scale_fill_identity() +
 geom_rect(data=d, mapping=aes(xmin=x, xmax=x+1, ymin=y, ymax=y+1), fill="white") +
 geom_rect(data=d, mapping=aes(xmin=x+0.05, xmax=x+0.95, ymin=y+0.5, ymax=y+1, fill=c)) +
-geom_text(data=d, mapping=aes(x=x+0.5, y=y+0.5, label=c), colour="black", hjust=0.5, vjust=1, size=3)
+geom_text(data=d, mapping=aes(x=x+0.5, y=y+0.5, label=c, size = 6), 
+          colour="black", hjust=0.5, vjust=1, size=3)
 ```
 
 
@@ -422,11 +425,11 @@ ggplot(data = na.omit(airquality),
 
 ### What are geometries {-}
 
-Geometries are the ways data can be visually represented. Boxplot, scatterplot and histogram are a few examples. There are **_many_** geoms available in ggplo2; type `geom_` in the console and you will get a listing. Even more are available outside the ggplot2 package. Here we'll only explore a few. 
+Geometries are the ways data can be visually represented. Boxplot, scatterplot and histogram are a few examples. There are **_many_** geoms available in ggplot2; type `geom_` in the console and you will get a listing. Even more are available outside the ggplot2 package. Here we'll only explore a few. 
 
 ### Boxplot {-}
 
-Boxplot is one of the most-used data visualizations. It dsplays the 5-number summary containing from bottom to top: minimum, first quartile, median (= second quartile), third quartile, maximum. Outliers, usually defined as more than `1.5 * IQR` from the median, are displayed as separate points. Some color was added in the example below.
+Boxplot is one of the most-used data visualizations. It displays the 5-number summary containing from bottom to top: minimum, first quartile, median (= second quartile), third quartile, maximum. Outliers, usually defined as more than `1.5 * IQR` from the median, are displayed as separate points. Some color was added in the example below.
 
 ```{r plot_geom_boxplot, fig.width=6, fig.height=3.5}
 dr_plot <- ggplot(dose_response_tidy, aes(x = dose, y = response))
@@ -543,9 +546,9 @@ ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
     geom_point(aes(color = Month), alpha = 0.7) 
 ```
 
-## Facetting
+## Faceting
 
-Facetting is the process of splitting into multiple plots with exactly the same coordinate system where each plot show a subset of the data. It can be applied to any geom. The figure above could be improved slightly with this technique. 
+Faceting is the process of splitting into multiple plots with exactly the same coordinate system where each plot show a subset of the data. It can be applied to any geom. The figure above could be improved slightly with this technique. 
 
 ```{r facetting, fig.asp=.75, out.width='80%', fig.align='center', warning=F}
 ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
@@ -567,7 +570,7 @@ Look at every result and ask yourself
 Only after you finish this phase you should apply make-up (labels, texts).
 Maybe new questions have arisen as a result of the plot you created?
 
-## Final tweeks
+## Final tweaks
 
 This section describes aspects that fall outside the standard realm of plot construction.
 
@@ -640,7 +643,7 @@ ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
         panel.grid.minor = element_blank())
 ```
 
-As you can see, there are `element_text()`, `element_line()` and `element_rect()` functions to specify these types opf plot elements. The `element_blank()` function can be used in various theme aspects to prevent it from being displayed.
+As you can see, there are `element_text()`, `element_line()` and `element_rect()` functions to specify these types of plot elements. The `element_blank()` function can be used in various theme aspects to prevent it from being displayed.
 
 
 ### Annotation {-}

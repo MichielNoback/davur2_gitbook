@@ -18,7 +18,7 @@ Some examples are
 
 - summarizing data; e.g. counting, ranking, 
 - selecting, filtering and sampling cases
-- manipulating data; creatng new or changing existing variables
+- manipulating data; creating new or changing existing variables
 - combining tables
 
 In this chapter only a small selection of this package will be discussed.
@@ -34,7 +34,7 @@ In this chapter I will often use the term **_case_** instead of row and **_varia
 
 ## Tibbles
 
-Tibbles are a modern take on data frames. They keep the features that have stood the test of time, and drop the features that used to be convenient but are now frustrating (i.e. converting character vectors to factors). There is an entire package dedicated to tibbles, not surprisingle called `tibble` you usually do not have to load the ackage because dplyr and tidyr do that already (they depend on it themselves).
+Tibbles are a modern take on data frames. They keep the features that have stood the test of time, and drop the features that used to be convenient but are now frustrating (i.e. converting character vectors to factors). There is an entire package dedicated to tibbles, not surprisingly called `tibble` you usually do not have to load the package because dplyr and tidyr do that already (they depend on it themselves).
 
 Use the `tibble()` constructor to create them as literals. There are several advantages over the old `data.frame` constructor:  
 
@@ -49,7 +49,7 @@ Use the `tibble()` constructor to create them as literals. There are several adv
 - It never uses `row.names()`. The whole point of tidy data is to store variables in a consistent way. So it never stores a variable as special attribute.
 - It only recycles vectors of length 1. This is because recycling vectors of greater lengths is a frequent source of bugs.
 
-**Coersion**
+**Coercion**
 To complement `tibble()`, tibble provides `as_tibble()` to coerce objects into tibbles.
 
 ### By-row constructor
@@ -289,7 +289,7 @@ dose_response_long %>% group_by(Dose) %>% top_n(3, Response)
 ```
 
 
-### Extract a colum as vector
+### Extract a column as vector
 
 Using `pull()` you can obtain atomic vectors.
 
@@ -320,7 +320,7 @@ Note that the previous chunk is equivalent to this
 dose_response_long %>% top_n(1, Response)
 ```
 
-So natural oredering is from low to high, but the `top_n()` function always orders from high to low. You can reverse this as well using the `desc()` function.
+So natural ordering is from low to high, but the `top_n()` function always orders from high to low. You can reverse this as well using the `desc()` function.
 
 ### Random sampling
 
@@ -337,13 +337,13 @@ The workings of `sample_n()` are obvious I guess.
 ### Window functions
 A new variable is usually the result of some operation on one or more previous variables. The data in an original variables is processed such that for each old value a new value is generated. Functions that carry out this kind of operation are called **_window_** functions. Thus, window functions are functions that take a vector and return another vector of the same length.
 
-For instance, the `cumsum()` function returns the cumulatieve sum of a numeric vector:
+For instance, the `cumsum()` function returns the cumulative sum of a numeric vector:
 
 ```{r}
 cumsum(1:5)
 ```
 
-Here are the main window functions. Note that some of them come from base R. Later you will see the use of several of them in contcert with the `mutate()` function.
+Here are the main window functions. Note that some of them come from base R. Later you will see the use of several of them in concert with the `mutate()` function.
 
 - **_`dplyr::lead`_**  
 Copy with values shifted by 1. 
@@ -446,7 +446,7 @@ chicks %>% slice(10:15)
 ```
 
 The transition from chick 1 to chick 2 is not taken into account!
-So to get the weight gain for each cick, we need to split the data first. This is dealt with in a later section but here is a preview:
+So to get the weight gain for each chick, we need to split the data first. This is dealt with in a later section but here is a preview:
 
 ```{r}
 chicks <- chicks %>% 
@@ -553,7 +553,7 @@ It can be concluded that, whatever the approach, a list of executables of some f
 
 #### `mutate_at()`
 
-In the previous examples, a selection of the numeric columns was required befor `mutate_all()` could be executed. An alternative approach is to use `mutate_at()` which has an additional argument for the column selection.
+In the previous examples, a selection of the numeric columns was required before `mutate_all()` could be executed. An alternative approach is to use `mutate_at()` which has an additional argument for the column selection.
 
 
 ```{r}
@@ -570,7 +570,7 @@ The selection can be specified in several ways:
 - `mutate_at(vars(matches("Width|Length")), my_z)`
 - `mutate_at(vars(contains(".")), my_z)`
 
-and there are probably more ways to maka a column selection.
+and there are probably more ways to make a column selection.
 
 
 You can see that the original variables are replaced with the original variables - that is, in the modified copy of the tibble. As you know it is customary in R to return a modified copy, not to overwrite original data unless you are explicitly saying so. 
@@ -615,7 +615,7 @@ dose_response_long %>%
 
 ## Operations on groups
 
-Often you want to know something about groups in your data. For instance, in the previous examples with the chickens, it is interesting to know the average weight gain of the chickens for each diet. This is where the `group_by()` function comes in, and its couterpart `ungroup()`.
+Often you want to know something about groups in your data. For instance, in the previous examples with the chickens, it is interesting to know the average weight gain of the chickens for each diet. This is where the `group_by()` function comes in, and its counterpart `ungroup()`.
 
 One important thing to realize is the `group_by()` does not **_split_** your data. instead, it adds metadata to a tibble (or data.frame) that marks how rows should be grouped. As long as that metadata is there -i.e. you have not called `ungroup()`- you won't be able to change the factors of the columns involved in the grouping.
 
@@ -623,7 +623,7 @@ If you really want to split, like the base R `split()` function, you should use 
 
 ### `group_by()` and `ungroup()`
 
-This is the most used set of grouping functions. It is usually followed by some summary function -discussed below- but sometimes, as in the case of the weight gain outlined in section \@ref(mutate), you want to progress with all datacombined. In that case you need to ungroup again.
+This is the most used set of grouping functions. It is usually followed by some summary function -discussed below- but sometimes, as in the case of the weight gain outlined in section \@ref(mutate), you want to progress with all data combined. In that case you need to ungroup again.
 
 Here is the summary use case. No need for ungrouping.
 
@@ -641,7 +641,7 @@ dose_response_long %>%
     summarize(mean = mean(Response))
 ```
 
-Here is rather lengthy use case for ungrouping: the z-score is calculated per `sex` group, and then there is some Dose-specific calculation before summarizing. This requiresd an ungroup in between.
+Here is rather lengthy use case for ungrouping: the z-score is calculated per `sex` group, and then there is some Dose-specific calculation before summarizing. This required an ungroup in between.
 
 ```{r}
 dose_response_long %>%
@@ -687,7 +687,7 @@ dose_response_long %>%
     group_map(~ quantile(.x$Response, probs = seq(0, 1, 0.2)))
 ```
 
-Use `group_walk()` when you only want to have a peek at each groupbefore processing further.
+Use `group_walk()` when you only want to have a peek at each group before processing further.
 
 ```{r}
 dose_response_long %>%
@@ -702,7 +702,7 @@ dose_response_long %>%
 
 You have seen the `summarize()` function at work a few times. In essence, it creates one or more summary statistics, for each group, if existing.
 
-For instance, to calculate the mean and sd of relative weight gain for different diets, this is the workflow for it:
+For instance, to calculate the mean and SD of relative weight gain for different diets, this is the workflow for it:
 
 ```{r}
 chicks %>% 
@@ -714,7 +714,7 @@ chicks %>%
               sd = sd(rel_weight_gain, na.rm = T))
 ```
 
-There is an equivalend that creates a summary for a group of variables: `summarize_all()`, `summarize_at()` and `summareize_if()` which are analogous to the `mutate_xxx()` methods. Here is one example. 
+There is an equivalent that creates a summary for a group of variables: `summarize_all()`, `summarize_at()` and `summareize_if()` which are analogous to the `mutate_xxx()` methods. Here is one example. 
 
 ```{r}
 iris %>% 
@@ -777,7 +777,7 @@ mtcars %>%
 
 There are a few functions, `left_join()`, `right_join()`, `inner_join()`, `full_join()`; only `full_join()` is discussed here; the others are variations behaving differently with missing data in one or the other data frames to combine. In base R you have `merge()` that is responsible for this kind of operations.
 
-Suppose you have two tribbles:
+Suppose you have two tibbles:
 
 ```{r}
 (trA <- tribble(
@@ -795,7 +795,7 @@ Suppose you have two tribbles:
 ))
 ```
 
-Since there is a common variable "ID" we can simply combine these two into a single tribble:
+Since there is a common variable "ID" we can simply combine these two into a single tibble:
 
 ```{r}
 full_join(trA, trB, by = "ID")
@@ -810,7 +810,7 @@ trA %>% full_join(trB, by = "ID")
 
 ### Adding rows and columns
 
-To add rows, use `bind_rows()` and to add colums, use `bind_cols()` have a look at the docs for the details. They are pretty much self-explanatory, and analogous to the base R `cbind()` and `rbind()` functions.
+To add rows, use `bind_rows()` and to add columns, use `bind_cols()` have a look at the docs for the details. They are pretty much self-explanatory, and analogous to the base R `cbind()` and `rbind()` functions.
 
 
 
