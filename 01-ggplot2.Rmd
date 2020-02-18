@@ -515,6 +515,20 @@ ggplot(data=airquality, mapping = aes(x = Month, y = Temp, fill=Month)) +
     geom_violin() + theme(legend.position = "none")
 ```
 
+### Barplot
+
+The bar plot is similar to a histogram in appearance, but quite different in intent. Where a histogram vis
+ualizes the density of a continuous variable, a bar plot tries to visualize the counts or weights of distinct groups.
+
+Here is a small example where the ten subjects of the `sleep` dataset have been charted (the x axis), and the `extra` column provided the height of the bar, split over the two groups. When no weight is provided, the occurrences of the different group levels will be counted and sued as weight.
+
+```{r barplot1, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(data = sleep,
+       mapping = aes(ID)) +
+    geom_bar(aes(weight = extra, fill = group))
+```
+
+
 
 
 ### Overview of the main geoms {-}

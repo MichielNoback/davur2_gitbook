@@ -12,11 +12,12 @@ knitr::opts_knit$set(cache = TRUE,
 
 Only solutions chunks are displayed here, not the output.
 
-## `ggplot2`
+## `ggplot2` and `tidyr`
 
-```{r}
+```{r message = FALSE}
 library(ggplot2)
 library(tidyr)
+library(dplyr)
 ```
 
 ### Global temperature
@@ -165,6 +166,29 @@ So this is not the correct test; you should use the Mann-Whitney U test.
 ```{r}
 wilcox.test(seizure_rate_corrected ~ treatment, data = epilepsy_corrected)
 ```
+
+### Bacterial growth curves with varioscan
+
+#### Load and tidy
+
+
+```{r}
+growth_data_file <- "data/varioscan/2020-01-30_wide.csv"
+growth_data <- read.csv(growth_data_file)
+
+growth_data <- growth_data %>%
+    pivot_longer(cols = starts_with("T."), 
+             names_prefix = "T.", 
+             names_to = "Time", 
+             values_to = "OD") %>%
+    mutate(Time = as.integer(Time))
+```
+
+Note that using the `names_prefix = "T."` argument makes the `T.` prefix disappear so converting time to a number is easier.
+
+
+
+
 
 ### The dinos
 
@@ -410,6 +434,95 @@ ggplot(data = skeleton_prop_totals_long,
 ```
 
 ## `tidyr` and `dplyr`
+
+
+### Population numbers
+
+#### Load the data
+
+```{r}
+pop_data_file <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/population/EDU_DEM_05022020113225751.csv"
+local_file <- "population_data.csv"
+if (! file.exists(local_file)) {
+    download.file(pop_data_file, destfile = local_file)
+}
+```
+
+```{r}
+population <- read.table(local_file,
+                         header = TRUE, 
+                         sep=",")
+```
+
+
+#### Clean up
+
+**Which?**
+`str(population)` tells me that `Unit.Code`, `Unit` and `PowerCode` are factors with one level. Using `table(population$PowerCode.Code, useNA = "always")` tells me that there are only zeros there. Same for `Reference.Period.Code` and `Reference.Period`. The variables `Flags` and `Flag.Codes` refer to the same, so one of them can be removed (I choose to remove `Flag.Codes`). The same counts for `SEX`/`Sex`, `AGE`/`Age` and `YEAR`/`Year`.
+
+**Select**
+This is my selection:
+
+```{r results = 'hide'}
+keep <- names(population)[c(1, 2, 4, 6, 8, 15, 16)]
+keep
+population <- as_tibble(population[, keep]) #tibble is nicer!
+head(population)
+```
+
+#### Create a "wide" yearly report of totals
+
+**select only totals**
+
+```{r results = 'hide'}
+pop_totals <- population[population$Sex == "Total" & population$Age == "Total: All age groups", ]
+##or, using dplyr
+#dplyr::filter(population, Sex == "Total" & Age == "Total: All age groups")
+```
+
+**pivot wider**
+
+```{r results = 'hide'}
+pop_totals_wide <- pivot_wider(
+    data = pop_totals[, c(1, 2, 5, 6)],
+    names_from = Year,
+    values_from = Value)
+pop_totals_wide
+
+```
+
+**population change**
+
+You could do this on the `pop_totals` dataset using the `lag()` function, after using `group_by()`, but since we have the wide format, you could also use a simple `for` loop, iterating the columns by index and subtracting the first from the second. I will demonstrate the only the first.
+
+```{r results = 'hide'}
+pop_totals %>% 
+    group_by(Country) %>%
+    mutate(Pop_change = as.integer(Value - lag(Value))) %>%
+    ungroup() %>%
+    select(-Value) %>%
+    pivot_wider(names_from = Year,
+        values_from = Pop_change) %>%
+    select(-`2005`, -`2010`, -Flag.Codes) 
+## backticks in above selection are required 
+## because we are selecting names that are numbers!
+```
+
+#### Create a bar plot 
+
+```{r pop-barplot, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Barplot of population numbers in some European countries"}
+sel <- population %>%
+    filter(Sex == "Women" | Sex == "Men") %>%
+    filter(COUNTRY %in% c("BEL", "CHE", "DNK", "FRA", "IRL", "DEU", "LUX", "NLD", "GBR"))
+ggplot(sel, mapping = aes(Year)) +
+    geom_bar(aes(weight = Value, fill = Sex))  + 
+    facet_wrap(. ~ COUNTRY)
+
+```
+
+#### Highest growth rate
+
+Which three countries have shown the fastes relative growth rate, measured over the available time period (2005-2017)?
 
 
 

@@ -16,7 +16,7 @@ Most of the ***_datasets_** referred to from within the exercises can be found i
 
 The solutions to the exercises are in the next chapter of this eBook.
 
-## `ggplot2`
+## `ggplot2` and `tidyr`
 
 ### Global temperature
 
@@ -30,7 +30,7 @@ Study the readme file in the same folder to find out their nature.
 
 #### Create a scatter-and-line-plot
 
-Create a scattter-and-line graph of both series in a single plot. Annotate well with labels and title.
+Create a scatter-and-line graph of both series in a single plot. Annotate well with labels and title.
 Optionally, add a smoother without error boundaries.
 
 #### Re-create the heatmap
@@ -48,9 +48,10 @@ As extra practice, you could try to answer these questions as well:
 
 The is also a monthly temperature file. Many explorations can be carried out on that one as well.
 
+
 ### Epilepsy drug trial
 
-The `epilepsy` folder (see the [Data Repo](https://github.com/MichielNoback/datasets/tree/master/epilepsy)) contains two files, one of which -`epilepsy.csv`- is the actual datafile. The `readme.md` file describes the dataset and the columns. Read it carefully before proceeding.
+The `epilepsy` folder (see the [Data Repo](https://github.com/MichielNoback/datasets/tree/master/epilepsy)) contains two files, one of which -`epilepsy.csv`- is the actual data file. The `readme.md` file describes the dataset and the columns. Read it carefully before proceeding.
 
 
 #### Load the data
@@ -85,6 +86,29 @@ Can you figure out a statistical test to see if the difference is significant?
 
 Investigate whether there is an age-dependent effect in either the base seizure rate or the effect of the treatment.
 
+### Bacterial growth curves with varioscan
+
+Chapter 10, \@ref(parsing-complex-data ), ended with a file being saved, `data/varioscan/2020-01-30_wide.csv`. This file is also present in the `varioscan` folder of the datasets repo.
+
+#### Load and tidy
+
+Load the data and tidy it.
+
+#### Create single growth curve
+
+Select a single sample to show a growth curve for.
+
+#### Create a growth curve visualization for the entire experiment.
+
+
+
+
+
+
+
+
+
+
 ### The dinos
 
 This exercise represents a review of many of basic R operations as well, besides ggplot2.
@@ -97,7 +121,7 @@ One of the figures accompanying the paper is this one:
 
 _**Figure 2**.Proportions of early dinosaurs through the Triassic, showing the rapid rise in the late Carnian and early to middle Norian. Two metrics are shown, numbers of specimens and numbers of genera in 12 sampled faunas, in proportion to all tetrapods; the linking line is a moving average. Specimen counts perhaps exaggerate the trend when compared with generic counts, or at least both show different aspects of the same rise in ecological impact of the dinosaurs in the Late Triassic. (Based on data in supplementary material Table S1.)_
 
-You have to agree this is terrible! They even omitted the legend for CPE which is descried in the paper "Carnian Pluvial Episode (CPE), dated at 232 MYa". And what the heck is a "moving average"?
+You have to agree this is terrible! They even omitted the legend for CPE which is descried in the paper "Carnian Pluvial Episode (CPE), dated at 232 M Ya". And what the heck is a "moving average"?
 
 Let's explore and improve.
 
@@ -115,7 +139,7 @@ Note: R has packages providing functionality to read from Excel, but this is out
 
 #### Clean up and load `codebook.csv`
 
-Have a look at the contents of `codebook.csv` in the editor. It is not yet suitable for loading into R. Write down the number of lines describing column headers for the skeletons and the number for footprints. Next, delete the lines that ar not really codebook entries.  
+Have a look at the contents of `codebook.csv` in the editor. It is not yet suitable for loading into R. Write down the number of lines describing column headers for the skeletons and the number for footprints. Next, delete the lines that are not really codebook entries.  
 
 1. Load the resulting file -as character data only!- and assign it to variable `codebook`.  
 2. Give the dataframe column names: `variable` and `description`.
@@ -146,7 +170,7 @@ There is an outlier flattening the picture quite a lot. Can you think of a strat
 Another problem is that the x-axis scale is from recent to ancient and this should be reversed.
 
 Finally, add a smoother (loess regression) for the entire dataset (not split over the Epochs!) and annotate the plot with nice axis labels, preferably using your previously created utility function. 
-NB: it may be a good idea to tweek the descriptions in the codebook a little bit.
+NB: it may be a good idea to tweak the descriptions in the codebook a little bit.
 
 Note that for "Million Years Ago" you can use the abbreviations "MYA" or "Ma" (Mega annum).
 
@@ -158,7 +182,7 @@ Reproduce the figure from the introduction of this section, but using ggplot2 in
 You will have to calculate the proportions of Dinosauria (`Dinosaur_gen`) relative to the total of all "tetrapod" groups (including `Archosauromorph_gen`, `Dinosaur_gen`, `Synapsid_gen`, `Parareptile_gen`, `Temnospondyl_gen`). You need this for Specimens (`_spec`) as well as Genera (`_gen`).  
 
 **Part 2**  
-Next, you should extract a single proportion for all Formations represented in a single `Midpoint`. I realise that this is not an entirely valid operation. Do you know why? Can you figure out how it was done for the erxisting publication plot?  
+Next, you should extract a single proportion for all Formations represented in a single `Midpoint`. I realize that this is not an entirely valid operation. Do you know why? Can you figure out how it was done for the existing publication plot?  
 I suggest you use the `aggregate()` function. You will need the Epoch and Stage of these as well for later aspects of plotting. 
 
 **Part 3**  
@@ -169,17 +193,17 @@ Finally you have the data to generate the plot itself, without the moving averag
 
 **Part 5 [challenge]**
 Add the moving average. A **_simple moving average_** (SMA) is the unweighted mean of the previous _n_ data.  
-The paper does not say anythong about the "window" (`n`) used in the moving average, but looking at the original figure it is less that 10 MY wide. Actually, to be honest, I cannot identify the used algorithm by looking at the plot. Can you?
+The paper does not say anything about the "window" (`n`) used in the moving average, but looking at the original figure it is less that 10 MY wide. Actually, to be honest, I cannot identify the used algorithm by looking at the plot. Can you?
 Just give it a shot and see how far you get.
 
 #### Make a better figure
 
 Next, try to make a plot that uses an alternative to the _moving average_ used in the publication. Also, use background coloring (rectangles) to highlight the Epochs within the plot.
 
-
 #### Use the size aesthetic 
 
-The "size" aesthetic can be used for indicating the absolute number of specimens/genera, repsectively. This adds an extra dimension of information to the plot.
+The "size" aesthetic can be used for indicating the absolute number of specimens/genera, respectively. This adds an extra dimension of information to the plot.
+
 
 
 ## `tidyr` and `dplyr`
@@ -187,6 +211,32 @@ The "size" aesthetic can be used for indicating the absolute number of specimens
 ### Population numbers
 
 The `population` folder of the `datasets` repo contains two files. One of them, `EDU_DEM.....csv` contains population data for all countries of the world (where data is available). We're going to mangle and explore this data a bit.  
+
+#### Load the data
+
+Start by loading the data into a dataframe called `population`.
+Since it is a bit large, I suggest you first download it to a local location.
+
+#### Clean up
+
+There are quite some uninformative variables - variables with only one value or with only NA.
+Find out which variables are uninformative and remove these from the dataframe.
+
+#### Create a "wide" yearly report of totals
+
+With the dataframe you now have, make a selection of the right rows and then create a report in wide format for the total population numbers over the available years. So, the years now get their own column and each country has a single row.  
+
+[Challenger] Next, present the same format, but now with the "population change" instead of the total population.
+
+#### Create a bar plot 
+
+Create a bar plot of the population numbers of the countries of Western Europe across the available years, split by gender.
+
+#### Highest growth rate
+
+Which three countries have shown the fastest relative growth rate, measured over the available time period (2005-2017)?
+
+
 
 
 

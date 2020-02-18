@@ -1,0 +1,143 @@
+# Parsing complex data 
+
+```{r, include=FALSE}
+options(digits = 3)
+knitr::opts_knit$set(cache = TRUE,
+                     tidy = TRUE,
+                     tidy.opts = list(blank = FALSE, width.cutoff = 60))
+
+library(tidyr)
+library(dplyr)
+```
+
+## Introduction
+
+This worked example shows that R can be used to parse complex text data as well. The data that is going to be parsed here is from a machine called Varioscan. It concerns a 96-well plate reading of a growth curve of the bacterium _Staphylococcus aureus_. 
+
+The research question was this: "Do anthocyans from red tulips inhibit growth of the bacterium _Staphylococcus aureus_?
+The experimental setup was as follows. Bacteria were grown in Nutrient Broth in a 96-well plate. Growth was measured through Optical Density every 10 minutes.
+The rows represent dilution series of the test substrate; every row is a twofold dilution of the previous, starting at 2% and ending at 0% (control). A: 2%, B: 1%, C: 0.5, D: 0.25, E: 0.125, F: 0.0625, G: 0.03125, H: 0%.  
+The columns represent an ordered experimental control setup:  
+
+- Columns 1-3: Red tulip with bacteria
+- Column 4: Red tulip without bacteria
+- Columns 5-7: White tulip with bacteria
+- Column 8: White tulip without bacteria
+- Column 9-11: Elution fluid (maltodextrin) with bacteria
+- Column 12: Elution fluid without bacteria
+
+The output of this machine has a terrible format that is impossible to process by any of the `read.xxxx()` functions. The data is segmented in blocks that represent a single measurement of the 96-well plate, and the blocks are separated to represent a 10-minute reading interval. Here is the data for the first complete block with some leading and trailing lines (omitting the first):
+
+```
+Photometric1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Plate 1: 1, reading 1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Sample;1;2;3;4;5;6;7;8;9;10;11;12;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ A;Un_0001 1/1;Un_0009 1/1;Un_0017 1/1;Un_0025 1/1;Un_0033 1/1;Un_0041 1/1;Un_0049 1/1;Un_0057 1/1;Un_0065 1/1;Un_0073 1/1;Un_0081 1/1;Un_0089 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ B;Un_0002 1/1;Un_0010 1/1;Un_0018 1/1;Un_0026 1/1;Un_0034 1/1;Un_0042 1/1;Un_0050 1/1;Un_0058 1/1;Un_0066 1/1;Un_0074 1/1;Un_0082 1/1;Un_0090 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ C;Un_0003 1/1;Un_0011 1/1;Un_0019 1/1;Un_0027 1/1;Un_0035 1/1;Un_0043 1/1;Un_0051 1/1;Un_0059 1/1;Un_0067 1/1;Un_0075 1/1;Un_0083 1/1;Un_0091 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ D;Un_0004 1/1;Un_0012 1/1;Un_0020 1/1;Un_0028 1/1;Un_0036 1/1;Un_0044 1/1;Un_0052 1/1;Un_0060 1/1;Un_0068 1/1;Un_0076 1/1;Un_0084 1/1;Un_0092 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ E;Un_0005 1/1;Un_0013 1/1;Un_0021 1/1;Un_0029 1/1;Un_0037 1/1;Un_0045 1/1;Un_0053 1/1;Un_0061 1/1;Un_0069 1/1;Un_0077 1/1;Un_0085 1/1;Un_0093 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ F;Un_0006 1/1;Un_0014 1/1;Un_0022 1/1;Un_0030 1/1;Un_0038 1/1;Un_0046 1/1;Un_0054 1/1;Un_0062 1/1;Un_0070 1/1;Un_0078 1/1;Un_0086 1/1;Un_0094 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ G;Un_0007 1/1;Un_0015 1/1;Un_0023 1/1;Un_0031 1/1;Un_0039 1/1;Un_0047 1/1;Un_0055 1/1;Un_0063 1/1;Un_0071 1/1;Un_0079 1/1;Un_0087 1/1;Un_0095 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ H;Un_0008 1/1;Un_0016 1/1;Un_0024 1/1;Un_0032 1/1;Un_0040 1/1;Un_0048 1/1;Un_0056 1/1;Un_0064 1/1;Un_0072 1/1;Un_0080 1/1;Un_0088 1/1;Un_0096 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Value;1;2;3;4;5;6;7;8;9;10;11;12;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ A;0,267552;0,272019;0,263387;0,278566;0,0984628;0,0936923;0,107464;0,105546;0,106577;0,091187;0,101332;0,10287;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ B;0,252371;0,246752;0,252471;0,258912;0,109206;0,0992488;0,10794;0,112641;0,112533;0,123722;0,092579;0,101677;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ C;0,217063;0,217046;0,213377;0,205835;0,0998421;0,105516;0,10702;0,103577;0,106884;0,0940363;0,0939646;0,0928696;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ D;0,215713;0,206423;0,225242;0,207882;0,101945;0,110656;0,101335;0,113771;0,10745;0,0974231;0,0959958;0,102336;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ E;0,201186;0,185729;0,191045;0,191651;0,112556;0,120355;0,155579;0,102002;0,101704;0,0888485;0,0985116;0,117562;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ F;0,160001;0,151447;0,156737;0,153896;0,11059;0,115471;0,107786;0,106571;0,109566;0,106598;0,0940017;0,100102;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ G;0,137258;0,129698;0,128936;0,131165;0,105271;0,112039;0,106057;0,0992461;0,109021;0,120979;0,0926567;0,112816;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ H;0,108073;0,10298;0,102386;0,108621;0,123152;0,104467;0,104612;0,0930304;0,0946673;0,103918;0,0982605;0,103816;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Plate 1: 1, reading 2;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Sample;1;2;3;4;5;6;7;8;9;10;11;12;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ A;Un_0001 1/1;Un_0009 1/1;Un_0017 1/1;Un_0025 1/1;Un_0033 1/1;Un_0041 1/1;Un_0049 1/1;Un_0057 1/1;Un_0065 1/1;Un_0073 1/1;Un_0081 1/1;Un_0089 1/1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+```
+
+Here, a strategy is demonstrated for when your data cannot be simply read into a dataframe directly. First, load all data in a single character vector, on line per element:
+
+```{r}
+file <- "data/varioscan/2020-01-30.csv"
+all_data <- readLines(file)
+head(all_data[-1]) ##omitting empty lines
+```
+
+Next, remove unwanted header lines:
+
+```{r}
+all_data <- all_data[-c(1, 2, 3)]
+```
+
+What is left is a vector with nice **_periodicity_**: recurring blocks of 22 elements with this structure: 
+
+- element 1: reading count
+- element 2: empty line
+- element 3-11: sample layout, which is always the same (so reading is required only once!)
+- element 13-21: actual OD data
+- element 22: empty line
+
+Let's read the first block - the sample layout. Note that there are many empty columns and these are removed as well.
+
+```{r}
+samples <- read.table(text = all_data[3:11], sep = ";", header = T)
+samples <- samples[, -(14:42)]
+```
+
+The experimental setup needs to be added as well.
+
+```{r}
+new_names <- c("Dilution", 
+               rep("Red", 3), "Red_w_o", 
+               rep("White", 3), "White_w_o", 
+               rep("Elution", 3), "Elution_w_o")
+names(samples) <- new_names
+dilutions <- c(2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0)
+samples$Dilution <- dilutions
+```
+
+Finally, we need a set of columns to add the OD measurements to. The `pivot_longer()` function is perfect for this. For the next phase, the sample data needs to be ordered by Sample ID, so that is done as well.
+
+```{r}
+growth_data <- samples %>%
+    pivot_longer(cols =-1, names_to = "Content", values_to = "Sample") %>%
+    arrange(Sample)
+```
+
+Note the warning `Duplicate column names detected, adding .copy variable`. This is not a bug but a feature! 
+
+In the next step we need to loop the entire file, essentially doing the same thing with all OD measurements: read, flatten and attach.
+
+```{r}
+line_count <- length(all_data)
+
+time = 0
+for(n in seq(from = 13, to = line_count, by = 22)) {
+    values <- read.table(text = all_data[(n+1):(n+8)], sep = ";", dec = ",")
+    values <- values[, -(14:42)]
+    values <- as.matrix(values[, -1])
+    dim(values) <- NULL
+    growth_data[, paste0("T.", time)] <- values
+    time <- time + 10
+}
+
+dim(growth_data)
+```
+
+Now everything is in a nice dataframe, but it is not **_tidy_** yet, of course.
+Let's save it first:
+
+```{r}
+write.csv(growth_data, 
+          file = "data/varioscan/2020-01-30_wide.csv",
+          row.names = FALSE)
+```
+
+One of the exercises will address this dataset for tidying and visualization.
+
+
