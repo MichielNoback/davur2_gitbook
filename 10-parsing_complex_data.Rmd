@@ -10,8 +10,6 @@ library(tidyr)
 library(dplyr)
 ```
 
-## Introduction
-
 This worked example shows that R can be used to parse complex text data as well. The data that is going to be parsed here is from a machine called Varioscan. It concerns a 96-well plate reading of a growth curve of the bacterium _Staphylococcus aureus_. 
 
 The research question was this: "Do anthocyans from red tulips inhibit growth of the bacterium _Staphylococcus aureus_?
@@ -129,8 +127,8 @@ for(n in seq(from = 13, to = line_count, by = 22)) {
 dim(growth_data)
 ```
 
-Now everything is in a nice dataframe, but it is not **_tidy_** yet, of course.
-Let's save it first:
+Now everything is in a nice dataframe, but it is not **_tidy_** yet, of course, nor is any other processing performed required for correct visualization and analysis of this dataset.
+Let's save it as it is though:
 
 ```{r}
 write.csv(growth_data, 
@@ -138,6 +136,5 @@ write.csv(growth_data,
           row.names = FALSE)
 ```
 
-One of the exercises will address this dataset for tidying and visualization.
-
+One of the exercises will address this dataset for tidying, processing and visualization.
 

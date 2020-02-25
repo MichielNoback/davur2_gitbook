@@ -18,6 +18,28 @@ The solutions to the exercises are in the next chapter of this eBook.
 
 ## `ggplot2` and `tidyr`
 
+### Trees
+
+The `datasets` package that is shipped with R has a dataset called `trees`. Create a scatter plot for Heigth as a function of Girth. Add a single line representing the linear model of this relationship, without shaded confidence interval. Have the Volume be reflected in the size of the plot symbol. Take care of the plot axes!
+
+### VADeaths
+
+The `datasets` package that is shipped with R has a dataset called `VADeaths`. Create a bar chart with the age groups on the x axis and Rural/Urban and Male/Female using stacking and/or side-by-side bars. You will need to pivot this table to long (tidy) format.
+
+
+### Investigate new visualization
+
+This will be an assignment in the course, carried out by student couples or triples.
+Go to the [R graph Gallery](https://www.r-graph-gallery.com/), browse the different sections. Then select one visualization to study in-depth - excluding the ones already demonstrated in this eBook. Work out an example with one of the datasets in the [Datasets Repo](https://github.com/MichielNoback/datasets) of this course. You can also choose another dataset, e.g. from the `datasets` package of R itself.  
+
+Present this visualization in class, addressing these topics:  
+
+1. What is this visualization named?
+2. What is its purpose; when is it appropriate to use?
+3. Why does it appeal to you?
+4. Show an example with the R code, explain difficulties and point out caveats.
+
+
 ### Global temperature
 
 Maybe you have seen this picture of the world temperature over the past 120 years:
@@ -86,23 +108,48 @@ Can you figure out a statistical test to see if the difference is significant?
 
 Investigate whether there is an age-dependent effect in either the base seizure rate or the effect of the treatment.
 
-### Bacterial growth curves with varioscan
+
+
+### Bacterial growth curves with Varioscan
 
 Chapter 10, \@ref(parsing-complex-data ), ended with a file being saved, `data/varioscan/2020-01-30_wide.csv`. This file is also present in the `varioscan` folder of the datasets repo.
 
-#### Load and tidy
+#### Load, preprocess and tidy
 
-Load the data and tidy it.
+First load the data; this is straightforward.
+Next, correct OD values of the "triplicate" experiments using the background signal data from samples without bacteria.
 
-#### Create single growth curve
+Thus, the `Red` values should be corrected using the `Red_w_o` values of the same dilution; the `White` columns using `White_w_o` and `Elution` using `Eluiton_w_o`.
 
-Select a single sample to show a growth curve for.
+This can be done when you apply a trick: transpose the dataframe using `t()` before carrying out the corrections. After transpose, you should loop the columns and correct using the periodicity of 8 (number of dilutions)
 
-#### Create a growth curve visualization for the entire experiment.
+You can use this as a start, assuming you loaded the file into `growt_data`:
+
+```{r}
+## Add rownames to get a hold of them after transpose
+rownames(growth_data) <- paste0(growth_data$Content, '.', 
+                                growth_data$.copy, '.', 
+                                rep(LETTERS[1:8], times = 12))
+## transpose
+tmp <- t(growth_data)
+
+## build a new dataframe/tibble
+growth_data_corr <- tibble(column_names = rownames(tmp))
+
+## continue here
+```
 
 
+After these steps, the data should be tidied.
 
+#### Create a growth curve visualization
 
+Create a line plot visualizing the entire experiment. 
+The challenge here is to present a clear picture with tons of dataseries on top of each other. You should realise there are 96 time series that could be plotted. 
+
+I suggest you also use a custom color pallette reflecting the sample groups in the experiment.
+
+The main sample set (the red tulip) should be emphasized. The least interesting controls, columns 4, 8 and 12, should be made less present visually.
 
 
 

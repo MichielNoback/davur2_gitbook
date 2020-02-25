@@ -20,6 +20,42 @@ library(tidyr)
 library(dplyr)
 ```
 
+
+### Trees
+
+```{r trees, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Tree girth, height and volume relationship"}
+ggplot(data = trees, 
+       mapping = aes(x = Girth, y = Height)) +
+    geom_point(aes(size = Volume), color = "blue", alpha = 0.6) +
+    geom_smooth(method = "lm", se = FALSE) +
+    xlab('Girth (in)') +
+    ylab('Height (ft)') +
+    labs(size = 'Volume (ft^3)')
+```
+
+### VADeaths
+
+```{r results = 'hide'}
+deaths <- as_tibble(VADeaths) %>% 
+    mutate(age_group = factor(rownames(VADeaths), ordered = TRUE)) %>%
+    select(age_group, everything()) %>%
+    pivot_longer(cols = -1, 
+                 names_to = c("Habitat", "Gender"), 
+                 names_sep = " ", 
+                 values_to = "Deaths")
+deaths
+```
+
+
+```{r VADeaths, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Virginia Death rates"}
+ggplot(data = deaths, aes(Gender)) +
+    geom_bar(aes(weight = Deaths, fill = Habitat))
+```
+
+### Investigate new visualization
+
+This assignment has no solution of course. It is included here to keep the numbering consistent.
+
 ### Global temperature
 
 Load the data.
@@ -167,25 +203,117 @@ So this is not the correct test; you should use the Mann-Whitney U test.
 wilcox.test(seizure_rate_corrected ~ treatment, data = epilepsy_corrected)
 ```
 
-### Bacterial growth curves with varioscan
+### Bacterial growth curves with Varioscan
 
-#### Load and tidy
+#### Load, preprocess and tidy
 
+Load:
 
 ```{r}
 growth_data_file <- "data/varioscan/2020-01-30_wide.csv"
 growth_data <- read.csv(growth_data_file)
+```
 
-growth_data <- growth_data %>%
+Preprocess. Applying corrctions to the dataset is not easy as it is; this is much easier when the dataframe is transposed so samples are in columns and timepoints in rows. Also, transposition will force all data into character because the first columns contain character data. To prevent this, they are removed (and stored), leaving only the numerical OD measurements.
+
+```{r}
+## Add rownames to get a hold of them after transpose
+row_names <- paste0(growth_data$Content, '.',
+                    growth_data$.copy, '.',
+                    rep(LETTERS[1:8], times = 12)) #letters A-H represent the 8 dilutions
+rownames(growth_data) <- row_names
+
+## remove non-numeric cols but store them first
+label_columns <- growth_data[, 1:4]
+tmp <- growth_data[, -(1:4)]
+
+## transpose
+tmp <- t(tmp)
+
+## build a new dataframe/tibble, empty but with predefined number of rows
+growth_data_corr <- tibble(.rows = nrow(tmp))
+```
+
+Carry out the corrections; can this be done more efficiently? Take the challenge!
+
+```{r}
+##1  9 17 25 33 41 49 57 65 73 81 89
+
+for (col_select in 1:8) {
+    #Using correction columns 25-32
+    #Red.1: columns 1 to 8
+    growth_data_corr[, row_names[col_select]] <- tmp[ , col_select] - tmp[ , col_select + 24]
+    #Red.2: columns 9 to 16
+    growth_data_corr[, row_names[col_select + 8]] <- tmp[ , col_select + 8] - tmp[ , col_select + 24]
+    #Red.3: columns 17 to 24
+    growth_data_corr[, row_names[col_select + 16]] <- tmp[, col_select + 16] - tmp[, col_select + 24]
+    
+    #Using correction columns 57-64
+    #White.1: columns 33 to 40
+    growth_data_corr[, row_names[col_select + 32]] <- tmp[ , col_select + 32] - tmp[ , col_select + 56]
+    #White.2: columns 41 to 48
+    growth_data_corr[, row_names[col_select + 40]] <- tmp[ , col_select + 40] - tmp[ , col_select + 56]
+    #White.3: columns 49 to 56
+    growth_data_corr[, row_names[col_select + 48]] <- tmp[ , col_select + 48] - tmp[ , col_select + 56]
+    
+    #Using correction columns 89-96
+    #Elution.1: columns 65 to 72
+    growth_data_corr[, row_names[col_select + 64]] <- tmp[ , col_select + 64] - tmp[ , col_select + 88]
+    #Elution.2: columns 73 to 80
+    growth_data_corr[, row_names[col_select + 72]] <- tmp[ , col_select + 72] - tmp[ , col_select + 88]
+    #Elution.1: columns 81 to 89
+    growth_data_corr[, row_names[col_select + 80]] <- tmp[ , col_select + 80] - tmp[ , col_select + 88]
+}
+growth_data_corr <- growth_data_corr[, row_names[-c(25:32, 57:64, 89:96)]]
+```
+
+Re-attach the 
+```{r}
+## Transpose back and re-attach the first columns and time series labels
+growth_data_corr <- t(growth_data_corr)
+label_columns <- label_columns[-c(25:32, 57:64, 89:96), ]
+growth_data_corr <- cbind(label_columns, growth_data_corr)
+names(growth_data_corr) <- c(colnames(label_columns), rownames(tmp))
+```
+
+Tidy:
+```{r}
+growth_data_tidy <- growth_data_corr %>%
     pivot_longer(cols = starts_with("T."), 
              names_prefix = "T.", 
              names_to = "Time", 
              values_to = "OD") %>%
-    mutate(Time = as.integer(Time))
+    mutate(Time = as.integer(Time)/60,
+           Dilution = factor(Dilution, ordered = T),
+           Copy = factor(.copy, ordered = T)) %>%
+    select(Content, Copy, Dilution, Time, OD)
 ```
 
-Note that using the `names_prefix = "T."` argument makes the `T.` prefix disappear so converting time to a number is easier.
+Note that using the `names_prefix = "T."` argument makes the `T.` prefix disappear so converting time to a number is easier. This conversion is done in the last step of this workflow, and it is also converted to hours instead of minutes. `Dilution` and `.copy` are converted to factors so they can be used as discrete values in ggplot2.
 
+
+#### Create a growth curve visualization
+
+Let's first look at the three copies of the same sample. Can they maybe be merged?
+
+```{r growth-curve1, fig.asp=0.7, out.width='90%', fig.align='center', fig.cap="Duplicates only"}
+
+growth_data_tidy %>% 
+    filter(Content == "Red", ) %>%
+    ggplot(mapping = aes(x = Time, y = OD)) +
+        geom_line(aes(color = Dilution, linetype = Copy)) +
+    xlab("Time (H)")
+```
+
+
+
+```{r growth-curve2, fig.asp=0.7, out.width='90%', fig.align='center', fig.cap="Do anthocyans inhibit bacterial growth?}
+
+growth_data %>% filter(.copy == 1 & Dilution %in% c(0, 0.25, 2)) %>%
+    ggplot(mapping = aes(x = Time, y = OD)) +
+        geom_line(aes(linetype = Dilution, color = Content)) +
+    scale_color_manual()
+```
 
 
 
