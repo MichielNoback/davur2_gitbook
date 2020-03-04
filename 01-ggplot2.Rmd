@@ -515,10 +515,9 @@ ggplot(data=airquality, mapping = aes(x = Month, y = Temp, fill=Month)) +
     geom_violin() + theme(legend.position = "none")
 ```
 
-### Barplot
+### Barplot {-}
 
-The bar plot is similar to a histogram in appearance, but quite different in intent. Where a histogram vis
-ualizes the density of a continuous variable, a bar plot tries to visualize the counts or weights of distinct groups.
+The bar plot is similar to a histogram in appearance, but quite different in intent. Where a histogram visualizes the density of a continuous variable, a bar plot tries to visualize the counts or weights of distinct groups.
 
 Here is a small example where the ten subjects of the `sleep` dataset have been charted (the x axis), and the `extra` column provided the height of the bar, split over the two groups. When no weight is provided, the occurrences of the different group levels will be counted and sued as weight.
 

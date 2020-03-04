@@ -10,14 +10,15 @@ knitr::opts_knit$set(cache = TRUE,
 
 ## Introduction
 
-Only solutions chunks are displayed here, not the output.
+Only solutions chunks are displayed here, not the output - except for the plots.
 
-## `ggplot2` and `tidyr`
+## The `ggplot2` and `tidyr` packages
 
 ```{r message = FALSE}
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+library(lubridate)
 ```
 
 
@@ -52,17 +53,56 @@ ggplot(data = deaths, aes(Gender)) +
     geom_bar(aes(weight = Deaths, fill = Habitat))
 ```
 
+
 ### Investigate new visualization
 
-This assignment has no solution of course. It is included here to keep the numbering consistent.
+This assignment has no solution of course. It is included here solely to keep the numbering consistent for both assignment chapters.
+
+
+### Puromycin
+
+
+```{r puromycin1, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="reaction velocity versus substrate concentration"}
+ggplot(data = Puromycin,
+       mapping = aes(x = conc, y = rate, color = state)) +
+    geom_point() +
+    geom_smooth(method = "loess")
+```
+
+Maybe it is better to do try to find another smoothing function? 
+
+```{r puromycin2, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="reaction velocity versus substrate concentration"}
+ggplot(data = Puromycin,
+       mapping = aes(x = conc, y = rate, color = state)) +
+    geom_point() +
+    geom_smooth(method = "loess", formula = y ~ log(x), se = F)
+```
+
+### ToothGrowth
+
+In my opinion, the boxplot is an excellent choice for the visualization. `geom_jitter()` could also work but is more of a hassle to split out on Dose.
+
+```{r toothgrowth, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap=" length of odontoblasts with vitamin C"}
+ggplot(data = ToothGrowth, mapping = aes(x = supp, y = len)) +
+    geom_boxplot(aes(color = as.factor(dose))) +
+    xlab("Supplement") +
+    ylab("Tooth length (mm)") +
+    labs(color = "Dose (mg/day)")
+```
+
 
 ### Global temperature
 
 Load the data.
 
 ```{r}
-temp_file <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/global_temperature/annual.csv"
-download.file(temp_file, destfile = "annual.csv")
+remote_file <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/global_temperature/annual.csv"
+local_file <- "../annual.csv"
+
+if (! file.exists(local_file)) {
+    download.file(remote_file, destfile = local_file)
+}
+
 global_temp <- read.table("annual.csv",
                           header = TRUE,
                           sep = ",")
@@ -209,14 +249,14 @@ wilcox.test(seizure_rate_corrected ~ treatment, data = epilepsy_corrected)
 
 Load:
 
-```{r}
+```{r load-growth-data}
 growth_data_file <- "data/varioscan/2020-01-30_wide.csv"
 growth_data <- read.csv(growth_data_file)
 ```
 
 Preprocess. Applying corrctions to the dataset is not easy as it is; this is much easier when the dataframe is transposed so samples are in columns and timepoints in rows. Also, transposition will force all data into character because the first columns contain character data. To prevent this, they are removed (and stored), leaving only the numerical OD measurements.
 
-```{r}
+```{r preprocess-growth-data, eval = FALSE}
 ## Add rownames to get a hold of them after transpose
 row_names <- paste0(growth_data$Content, '.',
                     growth_data$.copy, '.',
@@ -236,7 +276,7 @@ growth_data_corr <- tibble(.rows = nrow(tmp))
 
 Carry out the corrections; can this be done more efficiently? Take the challenge!
 
-```{r}
+```{r correct-growth-data, eval = FALSE}
 ##1  9 17 25 33 41 49 57 65 73 81 89
 
 for (col_select in 1:8) {
@@ -247,7 +287,7 @@ for (col_select in 1:8) {
     growth_data_corr[, row_names[col_select + 8]] <- tmp[ , col_select + 8] - tmp[ , col_select + 24]
     #Red.3: columns 17 to 24
     growth_data_corr[, row_names[col_select + 16]] <- tmp[, col_select + 16] - tmp[, col_select + 24]
-    
+
     #Using correction columns 57-64
     #White.1: columns 33 to 40
     growth_data_corr[, row_names[col_select + 32]] <- tmp[ , col_select + 32] - tmp[ , col_select + 56]
@@ -255,7 +295,7 @@ for (col_select in 1:8) {
     growth_data_corr[, row_names[col_select + 40]] <- tmp[ , col_select + 40] - tmp[ , col_select + 56]
     #White.3: columns 49 to 56
     growth_data_corr[, row_names[col_select + 48]] <- tmp[ , col_select + 48] - tmp[ , col_select + 56]
-    
+
     #Using correction columns 89-96
     #Elution.1: columns 65 to 72
     growth_data_corr[, row_names[col_select + 64]] <- tmp[ , col_select + 64] - tmp[ , col_select + 88]
@@ -268,7 +308,7 @@ growth_data_corr <- growth_data_corr[, row_names[-c(25:32, 57:64, 89:96)]]
 ```
 
 Re-attach the 
-```{r}
+```{r, eval = FALSE}
 ## Transpose back and re-attach the first columns and time series labels
 growth_data_corr <- t(growth_data_corr)
 label_columns <- label_columns[-c(25:32, 57:64, 89:96), ]
@@ -277,11 +317,11 @@ names(growth_data_corr) <- c(colnames(label_columns), rownames(tmp))
 ```
 
 Tidy:
-```{r}
+```{r, eval = FALSE}
 growth_data_tidy <- growth_data_corr %>%
-    pivot_longer(cols = starts_with("T."), 
-             names_prefix = "T.", 
-             names_to = "Time", 
+    pivot_longer(cols = starts_with("T."),
+             names_prefix = "T.",
+             names_to = "Time",
              values_to = "OD") %>%
     mutate(Time = as.integer(Time)/60,
            Dilution = factor(Dilution, ordered = T),
@@ -296,9 +336,9 @@ Note that using the `names_prefix = "T."` argument makes the `T.` prefix disappe
 
 Let's first look at the three copies of the same sample. Can they maybe be merged?
 
-```{r growth-curve1, fig.asp=0.7, out.width='90%', fig.align='center', fig.cap="Duplicates only"}
-
-growth_data_tidy %>% 
+```{r growth-curve1, fig.asp=0.7, out.width='90%', fig.align='center', fig.cap="Duplicates only", eval = FALSE}
+library(ggplot2)
+growth_data_tidy %>%
     filter(Content == "Red", ) %>%
     ggplot(mapping = aes(x = Time, y = OD)) +
         geom_line(aes(color = Dilution, linetype = Copy)) +
@@ -307,7 +347,7 @@ growth_data_tidy %>%
 
 
 
-```{r growth-curve2, fig.asp=0.7, out.width='90%', fig.align='center', fig.cap="Do anthocyans inhibit bacterial growth?}
+```{r growth-curve2, fig.asp=0.7, out.width='90%', fig.align='center', fig.cap="Do anthocyans inhibit bacterial growth?", eval = FALSE}
 
 growth_data %>% filter(.copy == 1 & Dilution %in% c(0, 0.25, 2)) %>%
     ggplot(mapping = aes(x = Time, y = OD)) +
@@ -561,7 +601,48 @@ ggplot(data = skeleton_prop_totals_long,
     annotate("text", x = 231, y = -3, label = "CPE")
 ```
 
-## `tidyr` and `dplyr`
+## The `tidyr` and `dplyr` packages
+
+### ChickWeight
+
+1. **Starting weight**.
+
+```{r chick-starting-weight, results = 'hold'}
+ChickWeight %>% 
+    filter(Time == 0) %>%
+    arrange(desc(weight)) %>%
+    select(Chick, Diet, weight) %>%
+    head(1)
+```
+
+2. **Total weight gain**.
+
+```{r chick-weight-gain, results = 'hold'}
+ChickWeight %>% 
+    group_by(Chick) %>%
+    mutate(weight_gain = weight - lag(weight)) %>%
+    summarize(timepoints = n(), 
+              total_weight_gain = sum(weight_gain, na.rm = T),
+              Diet = first(Diet)) %>%
+     arrange(desc(total_weight_gain)) %>% head(4)
+```
+
+Note: you could also have selected the first and last measurement for each chic of course, but not simply the last timepoint since several chickens had died by then.
+
+3. **Average weight gain per diet**. 
+
+```{r chick-diet-weight-gain, results = 'hold'}
+ChickWeight %>% 
+    group_by(Chick) %>%
+    mutate(weight_gain = weight - lag(weight)) %>%
+    summarize(timepoints = n(), 
+              total_weight_gain = sum(weight_gain, na.rm = T),
+              Diet = unique(Diet)) %>%
+    ungroup() %>%
+    group_by(Diet) %>%
+    summarize(num_chicks = n(),
+              average_weight_gain = mean(total_weight_gain))
+```
 
 
 ### Population numbers
@@ -603,9 +684,10 @@ head(population)
 **select only totals**
 
 ```{r results = 'hide'}
-pop_totals <- population[population$Sex == "Total" & population$Age == "Total: All age groups", ]
-##or, using dplyr
-#dplyr::filter(population, Sex == "Total" & Age == "Total: All age groups")
+pop_totals <- dplyr::filter(population, Sex == "Total" & Age == "Total: All age groups")
+
+##or, using base R
+#population[population$Sex == "Total" & population$Age == "Total: All age groups", ]
 ```
 
 **pivot wider**
@@ -651,6 +733,89 @@ ggplot(sel, mapping = aes(Year)) +
 #### Highest growth rate
 
 Which three countries have shown the fastes relative growth rate, measured over the available time period (2005-2017)?
+
+
+### Rubella and Measles
+
+No solutions (yet) for this exercise.
+
+
+
+## The `lubridate` package
+
+
+### Female births
+
+#### Load the data
+
+Load the data using the `lubridate` package so that the Date column becomes a date type.
+
+```{r results = 'hide'}
+remote_file <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/female_births/daily-total-female-births.csv"
+local_file <- "../female_births.csv"
+
+if (! file.exists(local_file)) {
+    download.file(remote_file, destfile = local_file)
+}
+female_births <- read.table(local_file,
+                          header = TRUE,
+                          sep = ",",
+                          stringsAsFactors = F)
+female_births <- female_births %>% 
+    mutate(Date = as_date(female_births$Date))
+
+(female_births <- as_tibble(female_births))
+```
+
+Note that in this case `as_tibble(female_births)` with the original dataframe would have converted the Date column to date objects as well.
+
+#### Check for missing rows
+
+```{r results = 'hide'}
+female_births %>%
+    mutate(lagged = lag(Date),
+           diff = Date - lagged) %>%
+    group_by(diff) %>%
+    summarize(count = n())
+```
+
+#### Report 
+
+First create the required columns:
+
+```{r results = 'hide'}
+(female_births <- female_births %>%
+    mutate(Day = wday(Date, label = T),
+           Month = month(Date, label = T)))
+```
+
+Report monthly counts, as barplot.
+
+```{r births-month-barplot, fig.asp=0.7, out.width='70%', fig.align='center', fig.cap="Monthly birth counts"}
+library(ggplot2)
+female_births %>%
+    ggplot(mapping = aes(x = Month, weight = Births)) +
+    geom_bar(fill = "darkblue") +
+    theme_bw()
+```
+
+The days
+
+```{r births-month-barplot2, fig.asp=0.7, out.width='70%', fig.align='center', fig.cap="Dayly birth counts"}
+library(ggplot2)
+female_births %>%
+    ggplot(mapping = aes(x = Day, weight = Births)) +
+    geom_bar(fill = "darkblue") +
+    theme_bw()
+```
+
+
+### Diabetes
+
+
+
+## The `stringr` package
+
 
 
 

@@ -16,7 +16,7 @@ Most of the ***_datasets_** referred to from within the exercises can be found i
 
 The solutions to the exercises are in the next chapter of this eBook.
 
-## `ggplot2` and `tidyr`
+## The `ggplot2` and `tidyr` packages
 
 ### Trees
 
@@ -25,7 +25,6 @@ The `datasets` package that is shipped with R has a dataset called `trees`. Crea
 ### VADeaths
 
 The `datasets` package that is shipped with R has a dataset called `VADeaths`. Create a bar chart with the age groups on the x axis and Rural/Urban and Male/Female using stacking and/or side-by-side bars. You will need to pivot this table to long (tidy) format.
-
 
 ### Investigate new visualization
 
@@ -38,6 +37,16 @@ Present this visualization in class, addressing these topics:
 2. What is its purpose; when is it appropriate to use?
 3. Why does it appeal to you?
 4. Show an example with the R code, explain difficulties and point out caveats.
+
+
+### Puromycin
+
+Create a scatter plotvisualization of the `Puromycin` dataset. Color by `state` and add a loess model smoother without error margin. Try to use the `formula = ` parameter for `geom_smooth()` for getting a better regression line.
+
+
+### ToothGrowth
+
+The `datasets` package that is shipped with R has a dataset called `ToothGrowth`. Create a visualization distinguishing the tooth growth between both supplement and dose.
 
 
 ### Global temperature
@@ -123,9 +132,9 @@ Thus, the `Red` values should be corrected using the `Red_w_o` values of the sam
 
 This can be done when you apply a trick: transpose the dataframe using `t()` before carrying out the corrections. After transpose, you should loop the columns and correct using the periodicity of 8 (number of dilutions)
 
-You can use this as a start, assuming you loaded the file into `growt_data`:
+You can use this as a start, assuming you loaded the file into `growth_data`:
 
-```{r}
+```{r eval = FALSE}
 ## Add rownames to get a hold of them after transpose
 rownames(growth_data) <- paste0(growth_data$Content, '.', 
                                 growth_data$.copy, '.', 
@@ -253,7 +262,20 @@ The "size" aesthetic can be used for indicating the absolute number of specimens
 
 
 
-## `tidyr` and `dplyr`
+## The `tidyr` and `dplyr` packages
+
+
+### ChickWeight
+
+You have seen how to determine the weight gain of the chickens between measurements in the `ChickWeight` dataset. Here, we look at this dataset again.
+
+1. **Starting weight**. Which chick had the highest starting weight? List this chick, together with its diet as follows: <Chick> <Diet> <weight>.
+
+2. **Total weight gain**. Determine the total weight gain for each chick and list all chickens together with their diet and number of weight measurements. Order from high to low weight gain.
+
+3. **Average weight gain per diet**. Determine the average weight gain for each diet.
+Report the Diet, number of chickens on the diet and the average weight gain.
+
 
 ### Population numbers
 
@@ -285,8 +307,43 @@ Which three countries have shown the fastest relative growth rate, measured over
 
 
 
-
-
 ### Rubella and Measles
 
-The `rubella_measles_cases` folder of the `datasets` repo contains 
+The `rubella_measles_cases` folder of the `datasets` repo contains historic data for both measles and rubella. This serves as extra training material (no solutions provided). Try to report, both visually and in tables:  
+
+- cases per per continent
+- cases over time per continent
+
+You can also combine with the population data from a previous exercise (folder `population`) and report measles and rubella per 10000 inhabitants, per country or per continent.
+Other data are available for exploring relations as well in the population data: age groups, sex, and diseases.
+
+## The `lubridate` package
+
+These exercises can of course only be completed if you also apply your knowledge of the `tidyr` and `dplyr` packages.
+
+### Female births
+
+The `datasets` repo contains a folder `female_births`. Its content is fairly simple: it holds the number of daily female births in California in 1959. We'll have a look at it now.
+
+#### Load the data
+
+Load the data using the `lubridate` package.
+
+#### Check for missing rows
+
+Check if there is really not a single day missing in this reported year.
+
+#### Report 
+
+Report the number of births per month (Jan - Dec) and per weekday (Mon - Sun), as barplots.
+Is there a month or day that seems to be anomalous, or do you see seasonal trends? Try a statistical test!
+
+
+
+### Diabetes
+
+
+
+## The `stringr` package
+
+
