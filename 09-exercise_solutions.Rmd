@@ -24,7 +24,32 @@ library(lubridate)
 
 ### Trees
 
-```{r trees, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Tree girth, height and volume relationship"}
+**A [&#10059;]**  
+
+```{r trees-A, fig.asp=0.7, out.width='70%', fig.align='center', eval = FALSE}
+ggplot(data = trees, 
+       mapping = aes(x = Girth, y = Height)) +
+    geom_point(color = "blue") +
+    xlab('Girth (in)') +
+    ylab('Height (ft)')
+```
+
+**B [&#10059;&#10059;]**  
+
+```{r trees-B, fig.asp=0.7, out.width='80%', fig.align='center', eval = FALSE}
+ggplot(data = trees, 
+       mapping = aes(x = Girth, y = Height)) +
+    geom_point(color = "blue") +
+    geom_smooth(method = "lm", se = FALSE) +
+    xlab('Girth (in)') +
+    ylab('Height (ft)')
+```
+
+**C [&#10059;&#10059;]**  
+
+Final figure.
+
+```{r trees-C, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Tree girth, height and volume relationship"}
 ggplot(data = trees, 
        mapping = aes(x = Girth, y = Height)) +
     geom_point(aes(size = Volume), color = "blue", alpha = 0.6) +
@@ -34,53 +59,119 @@ ggplot(data = trees,
     labs(size = 'Volume (ft^3)')
 ```
 
-### VADeaths
+### Insect Sprays <sup><font size="3em">[&#10059;&#10059;]</font></sup>
 
-```{r results = 'hide'}
-deaths <- as_tibble(VADeaths) %>% 
-    mutate(age_group = factor(rownames(VADeaths), ordered = TRUE)) %>%
-    select(age_group, everything()) %>%
-    pivot_longer(cols = -1, 
+The `datasets` package that is shipped with R has a dataset called `?`. Type `?InsectSprays` to get information on it. 
+
+**A [&#10059;]**  
+
+```{r insect-sprays-A, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap = "The counts of insects in agricultural experimental units treated with different insecticides"}
+ggplot(data = InsectSprays, 
+       mapping = aes(x = spray, y = count)) +
+    geom_boxplot() +
+    ylab("Insect count") +
+    xlab("Insect spray")
+```
+
+**B [&#10059;&#10059;]**  
+Create a jitter plot, splitting on the spray type and jittering minimally on the y-axis. Make sure that overlapping plot symbols do not hide each other and try to find a nice color. 
+[Extra: Give each spray a different plot symbol.]
+
+```{r insect-sprays-B, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap = "The counts of insects in agricultural experimental units treated with different insecticides"}
+ggplot(data = InsectSprays, 
+       mapping = aes(x = spray, y = count, color = spray)) +
+    geom_jitter(height = 0, width = 0.1, shape = 18, size = 2, alpha = 0.7) +
+    ylab("Insect count") +
+    xlab("Insect spray")
+```
+
+### Diauxic growth 
+
+**A [&#10059;&#10059;]**  
+
+```{r diauxic-growth-A}
+remote <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/diauxic_growth/monod_diauxic_growth.csv"
+local <- "../diauxic.csv"
+#download.file(url = remote, destfile = local)
+diauxic <- read.table(local, sep = ";", header = T)
+diauxic <- pivot_longer(data = diauxic,
+                        cols = -1,
+                        names_to = "Substrate",
+                        values_to = "OD")
+```
+
+**B [&#10059;]**  
+
+```{r diauxic-growth-B}
+diauxic$Substrate <- factor(diauxic$Substrate, 
+       levels = c("GlucMann", "GlucXyl", "GlucArab", "GlucRham"), 
+       labels = c("Glucose Mannose", "Glucose Xylose", "Glucose Arabinose", "Glucose Rhamnose"))
+```
+
+**C [&#10059;&#10059;]**  
+
+Create a line plot with all four growth curves within a single graph.
+
+```{r diauxic-growth-C, fig.asp=0.7, out.width='80%', fig.align='center', warning = FALSE, fig.cap = "Monod's Diauxic shift experiment."}
+ggplot(data = diauxic,
+       mapping = aes(x = Time, y = OD, color = Substrate)) +
+    geom_point() +
+    stat_smooth(method = "loess", se = FALSE, span = 0.3) +
+    theme_bw()
+```
+
+
+**D [&#10059;&#10059;&#10059;]**  
+
+```{r diauxic-growth-D, fig.asp=0.7, out.width='80%', fig.align='center', warning = FALSE, fig.cap = "Monod's Diauxic shift experiment."}
+ggplot(data = diauxic,
+       mapping = aes(x = Time, y = OD)) +
+    geom_point() +
+    stat_smooth(method = "loess", se = FALSE, span = 0.3) +
+    facet_wrap(. ~ Substrate, nrow = 2) +
+    theme_bw()
+```
+
+
+### Virginia Death Rates
+
+```{r VADeaths-prep}
+library(dplyr)
+## %>% is used to pipe results from one operation to the other, just like '|' in Linux.
+virginia_death_rates <- as_tibble(VADeaths)
+virginia_death_rates <- virginia_death_rates %>% 
+    mutate("Age Group" = factor(rownames(virginia_death_rates), ordered = TRUE)) %>% 
+    select(`Age Group`, everything()) #reorder the columns
+```
+
+**A (&#10059;&#10059;;&#10059;)**  
+
+Pivot this table to long (tidy) format. This should generate a dataframe with four columns: `Age Group`, `Habitat`, `Gender` and `DeathRate`.
+
+```{r VADeaths-A, results = 'hide'}
+virginia_death_rates <- virginia_death_rates %>% pivot_longer(cols = -1, 
                  names_to = c("Habitat", "Gender"), 
                  names_sep = " ", 
-                 values_to = "Deaths")
-deaths
+                 values_to = "DeathRate")
+```
+
+**B (&#10059;&#10059;)**  
+
+
+```{r VADeaths-B, fig.asp=0.7, out.width='70%', fig.align='center', fig.cap="Virginia Death rates"}
+ggplot(data = virginia_death_rates, aes(Gender)) +
+    geom_bar(aes(weight = DeathRate, fill = Habitat), position = "dodge")
 ```
 
 
-```{r VADeaths, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Virginia Death rates"}
-ggplot(data = deaths, aes(Gender)) +
-    geom_bar(aes(weight = Deaths, fill = Habitat))
-```
-
-
-### Investigate new visualization
+### Investigate new visualization <sup><font size="3em">[&#10059;&#10059;]</font></sup>
 
 This assignment has no solution of course. It is included here solely to keep the numbering consistent for both assignment chapters.
 
 
-### Puromycin
+### ToothGrowth <sup><font size="3em">[&#10059;&#10059;]</font></sup>
 
-
-```{r puromycin1, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="reaction velocity versus substrate concentration"}
-ggplot(data = Puromycin,
-       mapping = aes(x = conc, y = rate, color = state)) +
-    geom_point() +
-    geom_smooth(method = "loess")
-```
-
-Maybe it is better to do try to find another smoothing function? 
-
-```{r puromycin2, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="reaction velocity versus substrate concentration"}
-ggplot(data = Puromycin,
-       mapping = aes(x = conc, y = rate, color = state)) +
-    geom_point() +
-    geom_smooth(method = "loess", formula = y ~ log(x), se = F)
-```
-
-### ToothGrowth
-
-In my opinion, the boxplot is an excellent choice for the visualization. `geom_jitter()` could also work but is more of a hassle to split out on Dose.
+In my opinion, the boxplot is an excellent choice for this visualization. However, `geom_jitter()` could also work but is more of a hassle to split out on Dose.
 
 ```{r toothgrowth, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap=" length of odontoblasts with vitamin C"}
 ggplot(data = ToothGrowth, mapping = aes(x = supp, y = len)) +
@@ -88,6 +179,16 @@ ggplot(data = ToothGrowth, mapping = aes(x = supp, y = len)) +
     xlab("Supplement") +
     ylab("Tooth length (mm)") +
     labs(color = "Dose (mg/day)")
+```
+
+
+### Puromycin <sup><font size="3em">[&#10059;&#10059;&#10059;]</font></sup>
+
+```{r puromycin2, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="reaction velocity versus substrate concentration"}
+ggplot(data = Puromycin,
+       mapping = aes(x = conc, y = rate, color = state)) +
+    geom_point() +
+    geom_smooth(method = "loess", formula = y ~ log(x), se = F)
 ```
 
 
@@ -108,7 +209,7 @@ global_temp <- read.table("annual.csv",
                           sep = ",")
 ```
 
-#### Create a scatter-and-line-plot
+#### Create a scatter-and-line-plot [&#10059;&#10059;]
 
 ```{r scatter-global-temp, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Global temperature anomalies"}
 ggplot(data = global_temp,
@@ -119,7 +220,7 @@ ggplot(data = global_temp,
     theme_bw()
 ```
 
-#### Re-create the heatmap
+#### Re-create the heatmap [&#10059;&#10059;&#10059;]
 
 ```{r heatmap-global-temp, fig.asp=0.3, out.width='80%', fig.align='center', fig.cap="Global temperature anomalies"}
 ggplot(data = global_temp[global_temp$Source == "GCAG", ],
@@ -134,7 +235,7 @@ Note: rescaling the temperature from 0 to 1 may yield even better results.
 
 ### Epilepsy drug trial
 
-#### Load data
+#### Load data <sup><font size="3em">[&#10059;]</font></sup>
 
 ```{r results = 'hide'}
 epilepsy_file <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/epilepsy/epilepsy.csv"
@@ -144,16 +245,17 @@ epilepsy <- read.table(epilepsy_file,
 epilepsy$period <- factor(epilepsy$period, ordered=TRUE)
 ```
 
-#### Reorganize the data
+#### Reorganize the data <sup><font size="3em">[&#10059;&#10059;]</font></sup>
 
 ```{r results = 'hide'}
-(epilepsy <- as_tibble(
-    epilepsy[, c("subject","age","base","treatment","period","seizure.rate")]))
+epilepsy <- as_tibble(
+    epilepsy[, c("subject","age","base","treatment","period","seizure.rate")])
 ```
 
 #### Create plots of seizure rates
 
-**boxplot** 
+**A [&#10059;&#10059;]**   
+
 I used the `color` aesthetic here:
 
 ```{r boxplot-seizure-rates, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Seizure rates with color"}
@@ -171,7 +273,7 @@ ggplot(data = epilepsy,
     facet_wrap(. ~ treatment)
 ```
 
-**jitter plot**
+**B [&#10059;&#10059;&#10059;]**   
 
 Again, this could be done with color or facetting, but in this case `shape` is also an option (not shown). I used a little trick to separate the `period` for treated/untreated.
 
@@ -185,7 +287,7 @@ ggplot(data = tmp,
     geom_jitter(width = 0.05, alpha = 0.7) 
 ```
 
-**overlay**
+**C [&#10059;&#10059;&#10059;]**   
 
 ```{r boxplot-seizure-rates4, fig.asp=0.7, out.width='90%', fig.align='center', fig.cap="Seizure rates"}
 ggplot(data = epilepsy,
@@ -199,7 +301,7 @@ Note that it would have been nicer to omit the outliers from the boxplot. This i
 
 There are many more variations possible! You should really explore some of these as practice.
 
-#### A boxplot after correction
+#### A boxplot after correction <sup><font size="3em">[&#10059;&#10059;&#10059;]</font></sup>
 
 Correction:
 
@@ -219,7 +321,7 @@ ggplot(data = epilepsy_corrected,
     geom_boxplot()
 ```
 
-#### Test for statistical significance
+#### Test for statistical significance <sup><font size="3em">[&#10059;&#10059;&#10059;]</font></sup>
 
 ```{r}
 placebo <- epilepsy_corrected$seizure_rate_corrected[epilepsy_corrected$treatment == "placebo"]
@@ -245,7 +347,7 @@ wilcox.test(seizure_rate_corrected ~ treatment, data = epilepsy_corrected)
 
 ### Bacterial growth curves with Varioscan
 
-#### Load, preprocess and tidy
+#### Load, preprocess and tidy <sup><font size="3em">[&#10059;&#10059;&#10059;&#10059;]</font></sup>
 
 Load:
 
@@ -332,7 +434,7 @@ growth_data_tidy <- growth_data_corr %>%
 Note that using the `names_prefix = "T."` argument makes the `T.` prefix disappear so converting time to a number is easier. This conversion is done in the last step of this workflow, and it is also converted to hours instead of minutes. `Dilution` and `.copy` are converted to factors so they can be used as discrete values in ggplot2.
 
 
-#### Create a growth curve visualization
+#### Create a growth curve visualization <sup><font size="3em">[&#10059;&#10059;&#10059;&#10059;]</font></sup>
 
 Let's first look at the three copies of the same sample. Can they maybe be merged?
 
@@ -357,10 +459,9 @@ growth_data %>% filter(.copy == 1 & Dilution %in% c(0, 0.25, 2)) %>%
 
 
 
-
 ### The dinos
 
-#### export to csv
+#### export to csv <sup><font size="3em">[&#10059;&#10059;]</font></sup>
 
 This exercise has no code. I exported the data and placed the csv files under `data/dinos/` of this repo.
 
@@ -368,7 +469,7 @@ This exercise has no code. I exported the data and placed the csv files under `d
 
 Non-data lines were deleted. Lines 1-18 relate to skeleton data and 19-29 to footprint data. 
 
-**1. Load the resulting file and assign it to variable `codebook`.**  
+**A [&#10059;]**  
 
 The separator is ": " but it is not possible to define multi-character separators in `read.table()`. For now, simply use ":".
 
@@ -379,26 +480,26 @@ codebook <- read.table(codebook_file,
                       stringsAsFactors = FALSE)
 ```
 
-**2. Give the dataframe column names: `variable` and `description`.**
+**B [&#10059;]**  
 
 ```{r results = 'hide'}
 names(codebook) <- c('variable', 'description')
 ```
 
 
-**3. Remove the leading space of the second column **
+**C [&#10059;&#10059;]**  
 
 ```{r results = 'hide'}
 codebook$description <- sub('^ ', '', codebook$description)
 ```
 
-**4. Add a column called `dataset`: a factor with the value `skeleton` or `footprint`, depending on the file that is referred to.**
+**D [&#10059;&#10059;]**  
 
 ```{r results = 'hide'}
 codebook$dataset <- c(rep('skeleton', 18), rep('footprint', 11))
 ```
 
-#### Write a utility function
+#### Write a utility function <sup><font size="3em">[&#10059;&#10059;&#10059;]</font></sup>
 
 ```{r}
 get_description <- function(column_name, dataset = 'skeleton') {
@@ -414,7 +515,7 @@ get_description <- function(column_name, dataset = 'skeleton') {
 get_description('Dinosaur_gen', 'skeleton')
 ```
 
-#### Load skeleton data
+#### Load skeleton data <sup><font size="3em">[&#10059;]</font></sup>
 
 ```{r results = 'hide'}
 skeleton_file <- "data/dinos/skeletons.csv"
@@ -427,7 +528,7 @@ skeleton_file <- "data/dinos/skeletons.csv"
 ```
 
 
-#### Plot species versus time
+#### Plot species versus time <sup><font size="3em">[&#10059;&#10059;&#10059;]</font></sup>
 
 Note the use of the utility function previously created, `get_description()`.
 
@@ -443,7 +544,7 @@ ggplot(data = skeleton,
 
 #### Reproducing the publication figure
 
-**Part 1. calculate the proportions**
+**A [&#10059;&#10059;]**  
 
 We have not yet dealt with `dplyr` so we'll use base R for this. Note that the column `Total_gen` already contains the sum of all tetrapods.
 
@@ -452,7 +553,7 @@ skeleton$genera_proportion <- (skeleton$Dinosaur_gen / skeleton$Total_gen) * 100
 skeleton$specimen_proportion <- (skeleton$Dinosaur_spec / skeleton$Total_spec) * 100
 ```
 
-**Part 2. calculate the mean of the proportions**
+**B [&#10059;&#10059;&#10059;]**  
 
 ```{r results = 'hide'}
 skeleton_proportions <- aggregate(
@@ -461,7 +562,7 @@ skeleton_proportions <- aggregate(
     FUN = mean)
 ```
 
-**Part 3. flatten" the data**
+**C [&#10059;&#10059;&#10059;]**  
 
 ```{r results = 'hide'}
 skeleton_proportions_long <- pivot_longer(data = skeleton_proportions, 
@@ -470,7 +571,8 @@ skeleton_proportions_long <- pivot_longer(data = skeleton_proportions,
              cols = ends_with("_proportion"))
 ```
 
-**Part 4. generate the plot**
+**D [&#10059;&#10059;&#10059;&#10059;]**   
+
 
 First it needs to be flattened for use in ggplot2:
 
@@ -485,7 +587,8 @@ ggplot(data = skeleton_proportions_long,
     annotate("text", x = 231, y = -3, label = "CPE")
 ```
 
-**Part 5. Add the moving average**
+**E [&#10059;&#10059;&#10059;&#10059;&#10059;]**   
+
 
 Actually, this is not that simple to do with base R. What you want is a function that calculates the mean over a time period or over a fixed sequence of numbers. We'll take the mean over a sequence of 3 numbers. This could be a possible solution, using a `for` loop.
 
@@ -535,7 +638,7 @@ ggplot(data = skeleton_prop_avg_long) +
 **[THIS IS NOT CORRECT YET!!]**
 
 
-#### Make a better figure
+#### Make a better figure <sup><font size="3em">[&#10059;&#10059;&#10059;&#10059;]</font></sup>
 
 The Loess regression curve is a favorite of mine.
 
@@ -551,7 +654,7 @@ ggplot(data = skeleton_prop_avg_long,
     annotate("text", x = 231, y = -3, label = "CPE")
 ```
 
-#### Use the size aesthetic
+#### Use the size aesthetic <sup><font size="3em">[&#10059;&#10059;&#10059;&#10059;&#10059;]</font></sup>
 
 We need more data for this, the totals for each "Stage":
 
@@ -601,11 +704,65 @@ ggplot(data = skeleton_prop_totals_long,
     annotate("text", x = 231, y = -3, label = "CPE")
 ```
 
+
 ## The `tidyr` and `dplyr` packages
+
+### Global temperature revisited
+
+**A [&#10059;&#10059;]**  
+
+```{r pre-1970-anomaly, eval = FALSE}
+global_temp %>% filter(Source == "GCAG" & Year < 1970 & Mean > 0.1)
+global_temp %>% filter(Source == "GISTEMP" & Year < 1970 & Mean > 0.1)
+```
+
+
+**B [&#10059;&#10059;]**  
+
+```{r coldest-post-1945, eval = FALSE}
+global_temp %>% filter(Source == "GCAG" & Year > 1945) %>% 
+    filter(Mean == min(Mean))
+
+global_temp %>% filter(Source == "GISTEMP" & Year > 1945) %>% 
+    filter(Mean == min(Mean))
+```
+
+
+**C [&#10059;&#10059;&#10059;]**  
+
+This is a case for `filter(row_number() ...)`:
+
+```{r warmest-five-years, eval = FALSE}
+global_temp %>% 
+    group_by(Source) %>% 
+    arrange(desc(Mean)) %>% 
+    filter(row_number() %in% 1:5) %>% 
+    ungroup()
+```
+
+
+**D [&#10059;&#10059;&#10059;]**  
+
+This is a case for splitting with `cut()`. Package dplyr has an equivalent named `ntile()`. 
+
+```{r temperature-per-decade, eval = FALSE}
+
+cut(global_temp$Year, breaks = seq(min(global_temp$Year), max(global_temp$Year), 10))
+
+global_temp %>%
+    filter(Year >= 1970) %>%
+    mutate(Decade = cut(Year, 
+                        breaks = seq(1970, 2020, 10), 
+                        labels = seq(1970, 2010, 10),
+                        right = FALSE)) %>%
+    group_by(Decade, Source) %>%
+    summarize(Mean = mean(Mean))
+```
+
 
 ### ChickWeight
 
-1. **Starting weight**.
+1. **Starting weight [&#10059;&#10059;]**.
 
 ```{r chick-starting-weight, results = 'hold'}
 ChickWeight %>% 
@@ -615,7 +772,7 @@ ChickWeight %>%
     head(1)
 ```
 
-2. **Total weight gain**.
+2. **Total weight gain [&#10059;&#10059;&#10059;]**.
 
 ```{r chick-weight-gain, results = 'hold'}
 ChickWeight %>% 
@@ -629,7 +786,7 @@ ChickWeight %>%
 
 Note: you could also have selected the first and last measurement for each chic of course, but not simply the last timepoint since several chickens had died by then.
 
-3. **Average weight gain per diet**. 
+3. **Average weight gain per diet [&#10059;&#10059;&#10059;&#10059;]**. 
 
 ```{r chick-diet-weight-gain, results = 'hold'}
 ChickWeight %>% 
@@ -647,7 +804,7 @@ ChickWeight %>%
 
 ### Population numbers
 
-#### Load the data
+#### Load the data <sup><font size="3em">[&#10059;]</font></sup>
 
 ```{r}
 pop_data_file <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/population/EDU_DEM_05022020113225751.csv"
@@ -664,7 +821,7 @@ population <- read.table(local_file,
 ```
 
 
-#### Clean up
+#### Clean up <sup><font size="3em">[&#10059;&#10059;</font></sup>
 
 **Which?**
 `str(population)` tells me that `Unit.Code`, `Unit` and `PowerCode` are factors with one level. Using `table(population$PowerCode.Code, useNA = "always")` tells me that there are only zeros there. Same for `Reference.Period.Code` and `Reference.Period`. The variables `Flags` and `Flag.Codes` refer to the same, so one of them can be removed (I choose to remove `Flag.Codes`). The same counts for `SEX`/`Sex`, `AGE`/`Age` and `YEAR`/`Year`.
@@ -679,20 +836,13 @@ population <- as_tibble(population[, keep]) #tibble is nicer!
 head(population)
 ```
 
-#### Create a "wide" yearly report of totals
+#### Create a "wide" yearly report of totals <sup><font size="3em">[&#10059;&#10059;&#10059;</font></sup>
 
-**select only totals**
 
 ```{r results = 'hide'}
 pop_totals <- dplyr::filter(population, Sex == "Total" & Age == "Total: All age groups")
-
 ##or, using base R
 #population[population$Sex == "Total" & population$Age == "Total: All age groups", ]
-```
-
-**pivot wider**
-
-```{r results = 'hide'}
 pop_totals_wide <- pivot_wider(
     data = pop_totals[, c(1, 2, 5, 6)],
     names_from = Year,
@@ -701,7 +851,8 @@ pop_totals_wide
 
 ```
 
-**population change**
+
+#### Create a "wide" yearly report of population change <sup><font size="2em">[&#10059;&#10059;&#10059;&#10059;]</font></sup>
 
 You could do this on the `pop_totals` dataset using the `lag()` function, after using `group_by()`, but since we have the wide format, you could also use a simple `for` loop, iterating the columns by index and subtracting the first from the second. I will demonstrate the only the first.
 
@@ -718,21 +869,36 @@ pop_totals %>%
 ## because we are selecting names that are numbers!
 ```
 
-#### Create a bar plot 
+
+#### Create a bar plot  <sup><font size="3em">[&#10059;&#10059;&#10059;</font></sup>
 
 ```{r pop-barplot, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="Barplot of population numbers in some European countries"}
 sel <- population %>%
     filter(Sex == "Women" | Sex == "Men") %>%
-    filter(COUNTRY %in% c("BEL", "CHE", "DNK", "FRA", "IRL", "DEU", "LUX", "NLD", "GBR"))
+    filter(COUNTRY %in% c("BEL", "CHE", "DNK", "FRA", "IRL", "DEU", "LUX", "NLD", "GBR")) %>%
+    drop_na()
+
 ggplot(sel, mapping = aes(Year)) +
     geom_bar(aes(weight = Value, fill = Sex))  + 
     facet_wrap(. ~ COUNTRY)
 
 ```
 
-#### Highest growth rate
 
-Which three countries have shown the fastes relative growth rate, measured over the available time period (2005-2017)?
+#### Highest growth rate <sup><font size="2em">[&#10059;&#10059;&#10059;&#10059;]</font></sup>
+
+```{r pop-fastest-growth-rate}
+population %>%
+    filter(Sex == "Total" & Age == "Total: All age groups" & (Year == 2005 | Year == 2017)) %>%
+    group_by(Country) %>%
+    mutate(Change = Value - lag(Value), 
+           Previous = lag(Value)) %>%
+    mutate(GrowthRate = Change / Previous * 100) %>%
+    ungroup() %>%
+    select(COUNTRY, Country, GrowthRate ) %>%
+    arrange(desc(GrowthRate)) %>%
+    head(3)
+```
 
 
 ### Rubella and Measles
