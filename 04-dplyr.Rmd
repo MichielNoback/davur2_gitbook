@@ -641,9 +641,9 @@ dose_response_long %>%
     summarize(mean = mean(Response))
 ```
 
-After grouping on a variable, you will sometimes be interested in the top or bottom _n_ rows. The `head()` and `slice()` functions will not work then, surprisingly enough. Suppose you want the top 2 responses from both the males and females in the dose100mg group. Surprisingly enough this does not work:
+After grouping on a variable, you will sometimes be interested in the top or bottom _n_ rows. The `head()` function will not work then, surprisingly enough. Suppose you want the top 2 responses from both the males and females in the dose100mg group. Surprisingly enough this does not work:
 
-```{r need-for-row-number1}
+```{r need-for-row-number-1}
 dose_response_long %>%
     filter(Dose == "dose100mg") %>%
     group_by(sex) %>%
@@ -652,14 +652,15 @@ dose_response_long %>%
     ungroup() 
 ```
 
-Instead, to select the top _n_ values after grouping you need to use `filter(row_number() <some-logical-test>)`. Here is the correct solution.
+Instead, to select the top _n_ values after grouping you need to use either `slice()` or `filter(row_number() <some-logical-test>)`. Here is the correct solution.
 
-```{r need-for-row-number1}
+```{r need-for-row-number-2}
 dose_response_long %>%
     filter(Dose == "dose100mg") %>%
     group_by(sex) %>%
     arrange(Response) %>%
-    filter(row_number() %in% 1:2) %>%
+    slice(1:2) %>%
+    #filter(row_number() %in% 1:2) %>% #also works
     ungroup() #ungrouping not required but I added it for clarity of code
 ```
 

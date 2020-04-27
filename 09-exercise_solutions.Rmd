@@ -59,7 +59,7 @@ ggplot(data = trees,
     labs(size = 'Volume (ft^3)')
 ```
 
-### Insect Sprays <sup><font size="3em">[&#10059;&#10059;]</font></sup>
+### Insect Sprays 
 
 The `datasets` package that is shipped with R has a dataset called `?`. Type `?InsectSprays` to get information on it. 
 
@@ -135,7 +135,7 @@ ggplot(data = diauxic,
 
 ### Virginia Death Rates
 
-```{r VADeaths-prep}
+```{r VADeaths-prep-rep}
 library(dplyr)
 ## %>% is used to pipe results from one operation to the other, just like '|' in Linux.
 virginia_death_rates <- as_tibble(VADeaths)
@@ -169,7 +169,8 @@ ggplot(data = virginia_death_rates, aes(Gender)) +
 This assignment has no solution of course. It is included here solely to keep the numbering consistent for both assignment chapters.
 
 
-### ToothGrowth <sup><font size="3em">[&#10059;&#10059;]</font></sup>
+### ToothGrowth 
+**[&#10059;&#10059;]**  
 
 In my opinion, the boxplot is an excellent choice for this visualization. However, `geom_jitter()` could also work but is more of a hassle to split out on Dose.
 
@@ -182,7 +183,8 @@ ggplot(data = ToothGrowth, mapping = aes(x = supp, y = len)) +
 ```
 
 
-### Puromycin <sup><font size="3em">[&#10059;&#10059;&#10059;]</font></sup>
+### Puromycin 
+**[&#10059;&#10059;&#10059;]**  
 
 ```{r puromycin2, fig.asp=0.7, out.width='80%', fig.align='center', fig.cap="reaction velocity versus substrate concentration"}
 ggplot(data = Puromycin,
@@ -730,13 +732,14 @@ global_temp %>% filter(Source == "GISTEMP" & Year > 1945) %>%
 
 **C [&#10059;&#10059;&#10059;]**  
 
-This is a case for `filter(row_number() ...)`:
+This is a case for `filter(row_number() ...)` or `slice()`:
 
 ```{r warmest-five-years, eval = FALSE}
 global_temp %>% 
     group_by(Source) %>% 
     arrange(desc(Mean)) %>% 
-    filter(row_number() %in% 1:5) %>% 
+    slice(1:5) %>%
+    #filter(row_number() %in% 1:5) %>% #works as well
     ungroup()
 ```
 
@@ -764,7 +767,7 @@ global_temp %>%
 
 1. **Starting weight [&#10059;&#10059;]**.
 
-```{r chick-starting-weight, results = 'hold'}
+```{r chick-starting-weight, eval = FALSE}
 ChickWeight %>% 
     filter(Time == 0) %>%
     arrange(desc(weight)) %>%
@@ -774,7 +777,7 @@ ChickWeight %>%
 
 2. **Total weight gain [&#10059;&#10059;&#10059;]**.
 
-```{r chick-weight-gain, results = 'hold'}
+```{r chick-weight-gain, eval = FALSE}
 ChickWeight %>% 
     group_by(Chick) %>%
     mutate(weight_gain = weight - lag(weight)) %>%
@@ -788,7 +791,7 @@ Note: you could also have selected the first and last measurement for each chic 
 
 3. **Average weight gain per diet [&#10059;&#10059;&#10059;&#10059;]**. 
 
-```{r chick-diet-weight-gain, results = 'hold'}
+```{r chick-diet-weight-gain, eval = FALSE}
 ChickWeight %>% 
     group_by(Chick) %>%
     mutate(weight_gain = weight - lag(weight)) %>%
@@ -839,7 +842,7 @@ head(population)
 #### Create a "wide" yearly report of totals <sup><font size="3em">[&#10059;&#10059;&#10059;</font></sup>
 
 
-```{r results = 'hide'}
+```{r wide-population-repost, eval = FALSE}
 pop_totals <- dplyr::filter(population, Sex == "Total" & Age == "Total: All age groups")
 ##or, using base R
 #population[population$Sex == "Total" & population$Age == "Total: All age groups", ]
@@ -856,7 +859,7 @@ pop_totals_wide
 
 You could do this on the `pop_totals` dataset using the `lag()` function, after using `group_by()`, but since we have the wide format, you could also use a simple `for` loop, iterating the columns by index and subtracting the first from the second. I will demonstrate the only the first.
 
-```{r results = 'hide'}
+```{r pop-change-wide-report, eval = FALSE}
 pop_totals %>% 
     group_by(Country) %>%
     mutate(Pop_change = as.integer(Value - lag(Value))) %>%
@@ -887,7 +890,7 @@ ggplot(sel, mapping = aes(Year)) +
 
 #### Highest growth rate <sup><font size="2em">[&#10059;&#10059;&#10059;&#10059;]</font></sup>
 
-```{r pop-fastest-growth-rate}
+```{r pop-fastest-growth-rate, eval = FALSE}
 population %>%
     filter(Sex == "Total" & Age == "Total: All age groups" & (Year == 2005 | Year == 2017)) %>%
     group_by(Country) %>%
@@ -907,14 +910,13 @@ No solutions (yet) for this exercise.
 
 
 
+
 ## The `lubridate` package
 
 
 ### Female births
 
-#### Load the data
-
-Load the data using the `lubridate` package so that the Date column becomes a date type.
+#### Load the data <sup><font size="2em">[&#10059;&#10059;]</font></sup>
 
 ```{r results = 'hide'}
 remote_file <- "https://raw.githubusercontent.com/MichielNoback/datasets/master/female_births/daily-total-female-births.csv"
@@ -935,30 +937,33 @@ female_births <- female_births %>%
 
 Note that in this case `as_tibble(female_births)` with the original dataframe would have converted the Date column to date objects as well.
 
-#### Check for missing rows
+#### Check for missing rows <sup><font size="2em">[&#10059;&#10059;&#10059;]</font></sup>
 
-```{r results = 'hide'}
+
+```{r female-births-missing-data, eval = FALSE}
 female_births %>%
     mutate(lagged = lag(Date),
-           diff = Date - lagged) %>%
-    group_by(diff) %>%
-    summarize(count = n())
+           diff = as.integer(Date - lagged)) %>%
+    filter(is.na(diff) | diff != 1)
 ```
 
-#### Report 
+#### Report birth numbers <sup><font size="2em">[&#10059;&#10059;&#10059;]</font></sup>
+
+Report the number of births per month (Jan - Dec) and per weekday (Mon - Sun), as barplots.
+Is there a month or day that seems to be anomalous, or do you see seasonal trends? Try a statistical test!
 
 First create the required columns:
 
-```{r results = 'hide'}
-(female_births <- female_births %>%
+```{r female-births-numbers, eval = TRUE}
+female_births <- female_births %>%
     mutate(Day = wday(Date, label = T),
-           Month = month(Date, label = T)))
+           Month = month(Date, label = T))
 ```
 
 Report monthly counts, as barplot.
 
 ```{r births-month-barplot, fig.asp=0.7, out.width='70%', fig.align='center', fig.cap="Monthly birth counts"}
-library(ggplot2)
+#library(ggplot2)
 female_births %>%
     ggplot(mapping = aes(x = Month, weight = Births)) +
     geom_bar(fill = "darkblue") +
@@ -967,7 +972,7 @@ female_births %>%
 
 The days
 
-```{r births-month-barplot2, fig.asp=0.7, out.width='70%', fig.align='center', fig.cap="Dayly birth counts"}
+```{r births-month-barplot2, fig.asp=0.7, out.width='70%', fig.align='center', fig.cap="Daily birth counts"}
 library(ggplot2)
 female_births %>%
     ggplot(mapping = aes(x = Day, weight = Births)) +
@@ -977,6 +982,77 @@ female_births %>%
 
 
 ### Diabetes
+
+The `datasets` repo of this course contains a folder named `UCI_diabetes_dataset`. The complete dataset contains various types of information for 70 diabetes patients. Study the Readme file of this dataset before proceeding.
+
+#### Create a codebook <sup><font size="2em">[&#10059;&#10059;]</font></sup>
+
+Copy-and-paste the Code Fields into a file named `codebook.txt` and load it as a dataframe with name `codebook_diab`.
+
+```{r load-codebook-diab}
+codebook_diab <- read.table("data/diabetes_codebook.txt", sep = ",", header = TRUE)
+codebook_diab <- as_tibble(codebook_diab)
+head(codebook_diab)
+```
+
+
+#### Create a function to load patient data <sup><font size="2em">[&#10059;&#10059;&#10059;]</font></sup>
+
+Create a function -`load_patient_data(<patient-number>)`- that can be used to load data for specific patients from file and return this as a dataframe. If you access the remote copies of the files you should cache the data locally so a second requests for the same data will return a local copy of the file. The function should give a friendly error message when there is no data for the specific patient (e.g. patient 99 is not present in the dataset). 
+
+As extra challenge, you could read the documentation on the `tryCatch()` function and try to use this for your remote file access.
+
+
+```{r function-to-load-patient-data}
+load_patient_data <- function(patient_number) {
+    base_url <-"https://raw.githubusercontent.com/MichielNoback/datasets/master/UCI_diabetes_dataset/data-"
+    if (patient_number <= 9) patient_number <- paste0("0", patient_number)
+    remote_file <- paste0(base_url, patient_number)
+    local_file <- paste0("../diab-patient-", patient_number)
+    column_names <- c("Date", "Time", "Code", "Value")
+    #format:
+    #04-21-1991	9:09	58	100
+    result <- NULL
+    if (! file.exists(local_file)) {
+        result <- tryCatch( {#success
+                message(paste0("downloading ", remote_file))
+                download.file(remote_file, destfile = local_file)
+                patient_data <- read.table(local_file, 
+                                           sep = "\t", 
+                                           stringsAsFactors = F)
+                names(patient_data) <- column_names
+                return(patient_data)
+            },
+            error = function(cond) {
+                message(paste("Remote file does not seem to exist:", remote_file))
+                message("Here's the original error message:")
+                message(cond)
+                return(NULL)
+            },
+            warning = function(cond) {
+                message(paste("URL caused a warning:", remote_file))
+                message("Here's the original warning message:")
+                message(cond)
+                return(NULL)
+            })
+    } else {
+        message(paste0("reading local cache of", local_file))
+        result <- read.table(local_file, 
+                             sep = "\t",
+                             stringsAsFactors = F)
+        names(result) <- column_names
+    }
+    return(result)
+}
+patient8 <- load_patient_data(8)
+head(patient8)
+str(patient8)
+```
+
+B$
+
+
+
 
 
 

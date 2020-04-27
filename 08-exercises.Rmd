@@ -111,12 +111,14 @@ Present this visualization in class, addressing these topics:
 4. Show an example with the R code, explain difficulties and point out caveats.
 
 
-### ToothGrowth <sup><font size="3em">[&#10059;&#10059;]</font></sup>
+### ToothGrowth 
+**[&#10059;&#10059;]**  
 
 The `datasets` package that is shipped with R has a dataset called `ToothGrowth`. Create a visualization distinguishing the tooth growth between both supplement and dose.
 
 
-### Puromycin <sup><font size="3em">[&#10059;&#10059;&#10059;]</font></sup>
+### Puromycin 
+**[&#10059;&#10059;&#10059;]**  
 
 Create a scatter plot visualization of the `Puromycin` dataset. Color by `state` and add a loess model smoother without error margin. Use the `formula = ` parameter in `geom_smooth()` for getting a better-fitting regression line.
 
@@ -390,8 +392,6 @@ Determine the total weight gain for each chick and list all chickens together wi
 Report the Diet, number of chickens on the diet and the average weight gain.
 
 
-
-
 ### Population numbers
 
 The `population` folder of the `datasets` repo contains two files. One of them, `EDU_DEM.....csv` contains population data for all countries of the world (where data is available). We're going to mangle and explore this data a bit.  
@@ -428,7 +428,6 @@ Extra practice: Do the same for the different age groups.
 
 
 
-
 ### Rubella and Measles
 
 The `rubella_measles_cases` folder of the `datasets` repo contains historic data for both measles and rubella. This serves as extra training material (no solutions provided). Try to report, both visually and in tables:  
@@ -447,15 +446,15 @@ These exercises can of course only be completed if you also apply your knowledge
 
 The `datasets` repo contains a folder `female_births`. Its content is fairly simple: it holds the number of daily female births in California in 1959. We'll have a look at it now.
 
-#### Load the data
+#### Load the data <sup><font size="2em">[&#10059;&#10059;&#10059;&#10059;]</font></sup>
 
-Load the data using the `lubridate` package.
+Use local caching for this dataset using conditional exectution of `download.file()`. Load the data and use the `lubridate` package so that the Date column becomes a Date type.
 
-#### Check for missing rows
+#### Check for missing rows <sup><font size="2em">[&#10059;&#10059;&#10059;]</font></sup>
 
-Check if there is really not a single day missing in this reported year.
+Check if there is really not a single day missing in this reported year. Hint: one option is to look at the `lag()` between subsequent rows.
 
-#### Report 
+#### Report birth numbers <sup><font size="2em">[&#10059;&#10059;&#10059;]</font></sup>
 
 Report the number of births per month (Jan - Dec) and per weekday (Mon - Sun), as barplots.
 Is there a month or day that seems to be anomalous, or do you see seasonal trends? Try a statistical test!
@@ -464,6 +463,11 @@ Is there a month or day that seems to be anomalous, or do you see seasonal trend
 
 ### Diabetes
 
+The `datasets` repo of this course contains a folder named `UCI_diabetes_dataset`. The complete dataset contains various types of information for 70 diabetes patients. Study the Readme file of this dataset before proceeding.
+
+#### Create a codebook <sup><font size="2em">[&#10059;&#10059;]</font></sup>
+
+Copy-and-paste the Code Fields into a file named `codebook.txt` and load it as a dataframe with name `codebook_diab`.
 
 
 ## The `stringr` package
