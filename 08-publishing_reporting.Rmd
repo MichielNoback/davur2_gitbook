@@ -1,0 +1,52 @@
+# Publishing, Presenting and Reporting {#publish}
+
+
+```{r, include=FALSE}
+options(digits = 3)
+knitr::opts_knit$set(cache = TRUE,
+                     tidy = TRUE,
+                     tidy.opts = list(blank = FALSE, width.cutoff = 60))
+
+library(tidyr)
+```
+
+## Introduction
+
+This chapter deals with the way you can disseminate your data, findings and analyses.
+No in-depth discussions will be presented. This chapter merely outlines the possibilities and refers to external documentation.
+
+There are two distinct strategies to follow: RMarkdown and Shiny. The first is at its heart static, with the possibility to embed interactive elements. The latter is a toolbox to create interactive web applications on top of your data, using only R.
+
+
+## RMarkdown  
+
+The most extensive overview of the possibilities with RMarkdown are presented in "R Markdown: The Definitive Guide" ([https://bookdown.org/yihui/rmarkdown/](https://bookdown.org/yihui/rmarkdown/)).
+
+
+RMarkdown is the basis for many output formats: Simple HTML, Word or pdf documents are the most commonly used outputs formats.  
+However, it is also possible to create presentations (e.g. IOslides, Slidy and Beamer). These options are built right into R. Simply go to `File` &rarr; `New File` &rarr; `RMarkdown...` and select one of the Presentation options.
+
+Another interesting "static" output format is the Dashboard which is also discussed in the link above.
+
+In summary, these are the output formats to choose from:
+
+- HTML (with interactive elements using widgets or Shiny)
+- Word
+- Pdf
+- Notebooks
+- Presentations
+- Dashboards
+- Tufte Handouts
+- eBooks using Bookdown 
+- Blogs (also general websites) using Blogdown
+
+This entire ebook was written using RMarkdown and build using Bookdown.
+
+## Shiny  
+
+On the other side of the spectrum is Shiny. Shiny is not text-oriented as RMarkdown is, but foremost visualization-oriented. Shiny is a toolbox that makes it possible to build a complete data-exploration website using R code only.
+
+There is an excellent book written on shiny: [https://mastering-shiny.org/](https://mastering-shiny.org/)
+
+And this is the official website: [https://shiny.rstudio.com/](https://shiny.rstudio.com/).
+

@@ -583,6 +583,173 @@ Look at every result and ask yourself
 Only after you finish this phase you should apply make-up (labels, texts).
 Maybe new questions have arisen as a result of the plot you created?
 
+## Multivariate Categorical Data
+
+Visualizing multivariate categorical data requires another approach. Scatter- and line plots and histograms are all unsuitable for factor data. Here are some plotting examples that work well for categorical data. Copied and adapted from [STHDA site](http://www.sthda.com/english/articles/32-r-graphics-essentials/129-visualizing-multivariate-categorical-data/).
+
+The first example deals with the builtin dataset `HairEyeColor`. It is a contingency table and a `table` object so it must be converted into a dataframe before use.
+
+```{r}
+hair_eye_col_df <- as.data.frame(HairEyeColor)
+head(hair_eye_col_df)
+```
+### Bar plots of contingency tables
+
+```{r faceted-barplot, fig.asp=.75, out.width='80%', fig.align='center'}
+ggplot(hair_eye_col_df, aes(x = Hair, y = Freq)) +
+    geom_bar(aes(fill = Eye), 
+           stat = "identity", 
+           color = "white",
+           position = position_dodge(0.7)) + #causes overlapping bars
+    facet_wrap(~ Sex) + 
+    fill_palette("jco") # high contrast palette
+```
+
+### Balloon plot
+
+Here is a dataset called housetasks that contains data on who does what tasks within the household.
+
+```{r}
+(housetasks <- read.delim(
+  system.file("demo-data/housetasks.txt", package = "ggpubr"),
+  row.names = 1
+  ))
+```
+A balloon plot is an excellent way to visualize this kind of data:
+
+```{r balloonplot1, fig.asp=.75, out.width='80%', fig.align='center'}
+ggballoonplot(housetasks, 
+              fill = "value")
+```
+As you can see the counts map to both size and color.
+Balloon plots can also be faceted.
+
+```{r balloonplot2, fig.asp=.75, out.width='80%', fig.align='center'}
+ggballoonplot(hair_eye_col_df, x = "Hair", y = "Eye", size = "Freq",
+              fill = "Freq", facet.by = "Sex",
+              ggtheme = theme_bw()) +
+  scale_fill_viridis_c(option = "C")
+```
+### Mosaic plot
+
+A mosaic plot (library vcd) scales the tiles according to the count.
+
+```{r mosaic, fig.asp=.75, out.width='80%', fig.align='center'}
+library(vcd)
+mosaic(HairEyeColor, #needs the table object
+       shade = TRUE, 
+       legend = TRUE) 
+```
+
+### Correspondence analysis
+
+This type needs at least 3 columns, otherwise you get hard-to solve errors!
+Row names should not be in the first column, but assigned as `row.names`.
+
+```{r correspondence-analysis, fig.asp=.75, out.width='80%', fig.align='center', warning=FALSE}
+library(FactoMineR)
+library(factoextra)
+res.ca <- CA(housetasks, graph = FALSE)
+fviz_ca_biplot(res.ca, repel = TRUE)
+```
+
+
+## Advanced plotting aspects
+
+### Plot panels from `for` loops using `gridExtra::grid.arrange()`
+
+Sometimes you may wish to create a panel of plots using a `for` loop, similarly to the use of `par(mfrow = c(rwos, cols))` in base R. There are a few caveats to this seemingly simple notion.
+
+For instance, to create a set of boxplots for a few columns of the `airquality` dataset, you would do something like this in base R: 
+
+```{r panel-plots-base-R}
+# set the number of rows and columns
+par(mfrow = c(2, 2))
+
+# iterate the column names
+for (n in names(airquality[, 1:4])) {
+    boxplot(airquality[, n], 
+            xlab = n)
+}
+
+# reset par
+par(mfrow = c(1, 1))
+```
+
+When you naively migrate this structure to a ggplot setting, it will become something like this.
+
+```{r panel-plots-ggplot-1, fig.width="30%"}
+par(mfrow = c(2, 2))
+
+for (n in names(airquality[, 1:4])) {
+    plt <- ggplot(data = airquality,
+                  mapping = aes(y = n)) +
+        geom_boxplot() +
+        xlab(n)
+    print(plt)
+}
+
+par(mfrow = c(1, 1))
+```
+
+This is surely not the plot you would have expected: a single straight line, and no panel of plots. It turns out you can not use variables as selectors in `aes()`. You need to use `aes_string()` for that purpose. 
+Also note that if you omit the `print(plt)` call this outputs _nothing_, which is really quite confusing. You need to explicitely print the plot, not implicitly as you normally can.  
+Here is a second version.
+
+
+```{r panel-plots-ggplot-2, fig.width="30%"}
+par(mfrow = c(2, 2))
+
+for (n in names(airquality[, 1:4])) {
+    plt <- ggplot(data = airquality,
+                  mapping = aes_string(y = n)) +
+        geom_boxplot() +
+        xlab(n)
+    print(plt)
+}
+
+par(mfrow = c(1, 1))
+```
+
+This works as required except for the panel-of-plots part. The `mfrow` option to `par()` does not work with `ggplot2`. This can be fixed by the use of the `gridExtra` package, together with the base R `do.call()` function.  
+
+```{r panel-plots-ggplot-3, fig.asp=.75, out.width='80%', fig.align='center'}
+library(gridExtra)
+# a list to store the plots
+my_plots <- list()
+
+
+#use of indices instead of names is important!
+for (i in 1:4) {
+    n <- names(airquality)[i]
+    #omitting rows with NA for each single column
+    plt <- ggplot(data = airquality[!is.na(airquality[, n]), ],
+                  mapping = aes_string(y = n)) +
+        geom_boxplot() +
+        xlab(n)
+    my_plots[[i]] <- plt   # has to be integer, not name!
+}
+#use do.call() to process the list in grid.arrange
+do.call(grid.arrange, c(my_plots, nrow = 2))
+```
+
+So the rules for useage of a for-loop to create a panel of plots:
+
+- use `aes_string()` to specify your columns
+- store the plots in a list
+- use `grid.arrange()` to create the panel, wrapped in the `do.call()` function.
+
+
+### The `GGally::ggPairs()` function
+
+
+### Marginal plots using `ggExtra::ggMarginal()`
+
+
+
+
+
+
 ## Final tweaks
 
 This section describes aspects that fall outside the standard realm of plot construction.
@@ -658,6 +825,9 @@ ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
 
 As you can see, there are `element_text()`, `element_line()` and `element_rect()` functions to specify these types of plot elements. The `element_blank()` function can be used in various theme aspects to prevent it from being displayed.
 
+#### Adjust or set global theme
+
+You can specify within your document or R session that a certain theme should be used throughout. You can do this by using the `theme_set()`, `theme_update()` and `theme_replace()` functions, or with the esoteric `%+replace%` operator. Type `?theme_set` to find out more.
 
 ### Annotation {-}
 

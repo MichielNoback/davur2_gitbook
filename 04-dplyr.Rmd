@@ -641,7 +641,7 @@ dose_response_long %>%
     summarize(mean = mean(Response))
 ```
 
-After grouping on a variable, you will sometimes be interested in the top or bottom _n_ rows. The `head()` function will not work then, surprisingly enough. Suppose you want the top 2 responses from both the males and females in the dose100mg group. Surprisingly enough this does not work:
+After grouping on a variable, you will sometimes be interested in the top or bottom _n_ rows. The `head()` function will not work then, surprisingly enough. Suppose you want the bottom 2 responses from both the males and females in the dose100mg group. Surprisingly enough this does not work:
 
 ```{r need-for-row-number-1}
 dose_response_long %>%
@@ -696,13 +696,13 @@ dose_response_long %>%
 
 ### Apply a function to each group
 
-`group_map()`, `group_modify()` and `group_walk()` are functions that can be used to iterate on grouped tibbles.
+`group_map()`, `group_modify()` and `group_walk()` are functions that can be used to iterate grouped tibbles.
 
-- `group_modify()` returns a grouped tibble. In that case `.f` must return a data frame.
-- `group_map()` returns a list of results from calling `.f` on each group
-- `group_walk()` calls .f for side effects and returns the input `.tbl`, invisibly
+- `group_modify()` returns a grouped tibble. Therefore the supplied function must return a data frame/tibble to be able to combine the results of the individual subsets.
+- `group_map()` returns a list of results, each element being the result of calling the supplied function on each group
+- `group_walk()` calls the supplied function for side effects and returns the input `.tbl`, invisibly. This makes it possible to, for instance, print the intermediate results or write them to file without breaking the workflow.
 
-Here is an example of `group_walk()`. As you can see it takes a lambda expression as seen before:
+Here is an example of `group_map()`. As you can see it takes a lambda expression as seen before:
 
 ```{r}
 dose_response_long %>%
@@ -718,7 +718,6 @@ dose_response_long %>%
     group_walk(~ print(head(.x, 2))) %>% 
     summarise(avg = mean(Response))
 ```
-
 
 
 ## Summarizing and counting
