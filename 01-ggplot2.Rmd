@@ -4,6 +4,8 @@
 options(digits = 3)
 ## Utility functions: show_palette()
 source("scripts/utils.R")
+library(kableExtra)
+library(DT)
 knitr::opts_knit$set(cache = TRUE,
                      tidy = TRUE,
                      tidy.opts = list(blank = FALSE, width.cutoff = 60))
@@ -13,7 +15,7 @@ knitr::opts_knit$set(cache = TRUE,
 
 In this chapter, we'll explore the package `ggplot2`. Package ggplot2 is one of the most popular packages of R, and a de facto standard for creating publishable visualizations.
 
-Whole books have been written about ggplot2 (e.g. [INSERT REF]); these will not be repeated here. Instead, I have selected the minimal amount of information and examples to get you going in your own research visualization endeavors in biomedical research. For that reason, this chapter only deals with the base `ggplot()` function and its most important usage scenarios.  
+Whole books have been written about ggplot2 (e.g. [ggplot2 - Elegant Statistics for Data Aanalysis](https://ggplot2-book.org/)); these will not be repeated here. Instead, I have selected the minimal amount of information and examples to get you going in your own research visualization endeavors in biomedical research. For that reason, this chapter only deals with the base `ggplot()` function and its most important usage scenarios.  
 In my opinion, you are best prepared when first learning the ggplot "language" structure, not the complete listing of possibilities. You can check these out later on your own. If you are interested in what the package has to offer, type `help(package="ggplot2")` on the console.
 
 ### Keep the goal in mind {-}
@@ -84,9 +86,12 @@ You can immediately see why ggplot2 has become so popular. When creating more co
 This plot shows the power of ggplot2: building complex visualizations with minimal code.
 
 ```{r first-plot-w-color1, fig.asp=.75, out.width='80%', fig.align='center', warning=FALSE, fig.cap='Ozone as function of Temp with plot symbols colored by Month'}
-airquality$Month <- as.factor(airquality$Month)
-airquality$TempFac <- cut(airquality$Temp, breaks = c(50, 75, 100), labels = c("low", "high"), ordered_result = T)
-ggplot(data = airquality, mapping = aes(x = Temp, y = Ozone, color=Month)) +
+airquality$Month_f <- as.factor(airquality$Month)
+airquality$TempFac <- cut(airquality$Temp, 
+                          breaks = c(50, 75, 100), 
+                          labels = c("low", "high"), 
+                          ordered_result = T)
+ggplot(data = airquality, mapping = aes(x = Temp, y = Ozone, color = Month_f)) +
   geom_point() 
 ```
 
@@ -105,13 +110,16 @@ Looking at the above plot, you should notice that
 The plot below fixes and addresses the above issues to create a publication-ready figure. We'll get to the details of this code as we proceed in this chapter. For now the message is **_be meticulous in constructing your plot_**.
 
 ```{r first-plot-w-color2, fig.asp=.75, out.width='80%', fig.align='center', warning=FALSE, fig.cap='Ozone level dependency on Temperature. Grey area: Loess smoother with 95% confidence interval. Source: R dataset \"Daily air quality measurements in New York, May to September 1973.\"'}
-airquality$Month <- factor(airquality$Month, levels=1:12, labels=month.abb)
-ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
-  geom_point(mapping=aes(color=Month)) + 
-  geom_smooth(method="loess") +
+airquality$Month_f <- factor(airquality$Month, 
+                           levels = 1:12, 
+                           labels = month.abb)
+ggplot(data = airquality, 
+       mapping = aes(x = Temp, y = Ozone)) +
+  geom_point(mapping = aes(color = Month_f)) + 
+  geom_smooth(method = "loess", formula = y ~ x) + #the default formula, but prevents a printed message
   xlab(expression("Temperature " (degree~F))) +
   ylab("Ozone (ppb)") +
-  labs(color="Month")
+  labs(color = "Month")
 ```
 
 
@@ -145,8 +153,9 @@ blocks <- read.table("data/ggplot2_elements.txt",
                      sep=";",
                      header = T,
                      as.is = 1:2)
+#datatable(blocks[1:3, ], caption = 'The three core ggplot2 layers')
 knitr::kable(blocks[1:3,],
-             caption = 'The three core ggplot2 layers')
+            caption = 'The three core ggplot2 layers')
 ```
 
 First, there is the **_data_** layer - the input data that you want to visualize:
@@ -189,7 +198,10 @@ dose_response <- read.table("data/dose_response2.txt",
                             header = T,
                             sep=";",
                             colClasses=c("character", "factor", "integer", "integer"))
-knitr::kable(head(dose_response, n=5))
+DT::datatable(dose_response, 
+              options = list(pageLength = 15,
+                             dom = 'tpli'))
+#knitr::kable(head(dose_response))
 ```
 
 This dataset is not tidy because there is an independent variable -the dose- that should have its own column; its value is now buried inside two column headers (`dose10mg` and `dose10mg`). Also, there is actually a single variable -the response- that is now split into two columns. Thus, a row now contains two observations. 
@@ -225,29 +237,31 @@ tidy_my_df <- function(df) {
            apply(X = df, MARGIN = 1, FUN = create_tidy_columns))
     tmp[order(tmp$dose), ]
 }
-knitr::kable(head(tidy_my_df(dose_response), n=10))
+DT::datatable(tidy_my_df(dose_response), 
+              options = list(pageLength = 15,
+                             dom = 'tpli'))
 ```
 
 Luckily, there is a very nice package that makes this quite easy: `tidyr`.
 
-#### Tidying data using `tidyr::gather()` {-}
+#### Tidying data using `tidyr::pivot_longer()` {-}
 
 ```{r tidy-it1}
 ## tidy
-dose_response_tidy <- gather(data=dose_response, 
-                             key=dose, 
-                             value=response, 
-                             "dose10mg", "dose100mg")
-## transform dose column to nice factor
-dose_response_tidy$dose <- factor(ifelse(
-    dose_response_tidy$dose == "dose10mg", 10, 100), 
-  ordered = T)
-knitr::kable(head(dose_response_tidy, n=10))
+dose_response_tidy <- pivot_longer(data = dose_response,
+                                   cols = c("dose10mg", "dose100mg"),
+                                   names_pattern = "dose(\\d+)mg",
+                                   names_to = "dose",
+                                   values_to = "response")
+
+DT::datatable(dose_response_tidy, 
+              options = list(pageLength = 15,
+                             dom = 'tpli'))
 ```
 
 The data is tidy now, and ready for use within ggplot2.
 
-We'll explore the `gather()` function in detail in a next chapter. 
+We'll explore the `pivot_longer()` function in detail in a next chapter when discussing the `tidyr` package. 
 
 Now, creating the plot in ggplot2 is a breeze
 
@@ -259,19 +273,18 @@ dr_plot +
 
 Would you proceed with this hypothetical drug?
 
-## Aesthetics
+## Aesthetics 
 
-After you obtain a tidy dataset and pass it to ggplot you must decide what the aesthetics are. This defines the way the data are represented in your plot. Very roughly speaking, you could correlate the aesthetics to the **_dimensions_** of the data you want to visualize. For instance, given this chapters' first example of the airquality dataset, the aesthetics were defined in three "dimensions":  
-
+After you obtain a tidy dataset and pass it to ggplot you must decide what the aesthetics are: the way the data are represented in your plot. Very roughly speaking, you could correlate the aesthetics to the **_dimensions_** of the data you want to visualize. For instance, given this chapters' first example of the airquality dataset, the aesthetics were defined in three "dimensions":  
 - dimension "X" for temperature, 
 - dimension "Y" for Ozone 
 - dimension "color" for the month. 
 
-Although color is used most often to represent an extra dimension in the data, other aesthetics you may consider are shape, size, line width and line type.
+Although color is used most often to represent an extra dimension in the data, other aesthetics you may consider are shape, size, line width, line type and facetting (making a grid of plots).
 
 ### Colors {-}
 
-Colors can be defined in a variety of ways:
+Colors can be defined in a variety of ways in ggpplot (and R in general):
 
 - color name
 - existing color palette
@@ -289,7 +302,7 @@ scale_y_continuous(name="", breaks=NULL, expand=c(0, 0)) +
 scale_fill_identity() +
 geom_rect(data=d, mapping=aes(xmin=x, xmax=x+1, ymin=y, ymax=y+1), fill="white") +
 geom_rect(data=d, mapping=aes(xmin=x+0.05, xmax=x+0.95, ymin=y+0.5, ymax=y+1, fill=c)) +
-geom_text(data=d, mapping=aes(x=x+0.5, y=y+0.5, label=c, size = 6), 
+geom_text(data=d, mapping=aes(x=x+0.5, y=y+0.5, label=c, size = 5), 
           colour="black", hjust=0.5, vjust=1, size=3)
 ```
 
@@ -297,12 +310,37 @@ geom_text(data=d, mapping=aes(x=x+0.5, y=y+0.5, label=c, size = 6),
 When you provide a literal (character) for the color aesthetic it will simply be that color. If you want to map a property (e.g. "Month") to a range of colors, you should use a color palette. Since ggplot has build-in color palettes, you can simply use `color=<my-third-dimension-variable>`. This variable mapping to color can be either a factor (discrete scale) or numeric (continuous scale). 
 The ggplot function will map the variable the default color palette.
 
+Be aware that there is a big difference in where you specify an aesthetic. When it should be mapped onto a variable (the values within a column) you should put it within the `aes()` call. When you want to specify a literal -static- aesthetic (e.g. color) you place it outside the `aes()` call. When you misplace the mapping you get strange behavior:
+
+```{r color-scope-1, fig.asp=.75, out.width='60%', fig.align='center'}
+ggplot(iris, aes(Sepal.Length, Sepal.Width)) + 
+    geom_point(aes(color = 'Green'))
+```
+
+This will not work either (not evaluated because it gives an error):
+
+```{r color-scope-2, eval = FALSE}
+ggplot(iris, aes(Sepal.Length, Sepal.Width)) + 
+    geom_point(color = Species)
+```
+
+And when you specify it twice the most 'specific' will take precedence (but the legend label is incorrect here):
+
+```{r color-scope-3, fig.asp=.75, out.width='60%', fig.align='center'}
+ggplot(data = na.omit(airquality), 
+       mapping = aes(x = Ozone, y = Solar.R, color = Month_f)) +
+    geom_point(mapping = aes(color = Day))
+```
+
+Have a look at the paragraph "Inheritance of aesthetics" for more detail.
 Here are some ways to work with color palettes
 
 #### The default palette {-}
 
 ```{r color-palette-default, fig.asp=.75, out.width='80%', fig.align='center'}
-sp <- ggplot(iris, aes(Sepal.Length, Sepal.Width)) + geom_point(aes(color = Species))
+#store it in variable "sp" for re-use in subsequenct chunks
+sp <- ggplot(iris, aes(Sepal.Length, Sepal.Width)) + 
+    geom_point(aes(color = Species))
 sp
 ```
 
@@ -315,6 +353,7 @@ You can specify your own colors using `scale_color_manual()` for scatter plots o
 sp + scale_color_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"))
 ```
 
+Here the palette is defined using the **_hexadecimal_** notation: Each color can be specified as a mix of Red, Green, and Blue values in a range from 0 to 255. In Hexadecimal notation these are the position 1 and 2 (Red), 3 and 4 (Green) and 5 and 6 (Blue) after the hash sign (#). `00` equals zero and `FF` equals 255 (16*16). This is quite a universal encoding: a gazillion websites style their pages using this notation.
 
 Here is a nice set of colors:
 
@@ -379,7 +418,7 @@ ggplot(shapes, aes(x, y)) +
   geom_point(aes(shape = shape), size = 5, fill = "red") +
   geom_text(aes(label = shape), hjust = 0, nudge_x = 0.15) +
   scale_shape_identity() +
-  expand_limits(x = 4.1) +
+  #expand_limits(x = 4.1) +
   theme_void()
 ```
 
@@ -394,30 +433,29 @@ Legal values are the strings "blank", "solid", "dashed", "dotted", "dotdash", "l
 
 You can set line type to a constant value. For this you use the linetype geom parameter. For instance, `geom_line(data=d, mapping=aes(x=x, y=y), linetype=3)` sets the line type of all lines in that layer to 3, which corresponds to a dotted line), but you can also use it dynamically.
 
-```{r create-deatchs-df, include=FALSE}
-deaths <- data.frame(
-    month = rep(1:72, times=2), 
-    sex=rep(factor(c("m", "f")), each=72),
-    deaths = c(mdeaths, fdeaths))
-head(deaths)
-```
-
-Here is an example where the female and male deaths in the UK for 72 successive months are plotted.
+Here is an example where the female and male deaths in the UK for 72 successive months are plotted. The `linetype = sex` aesthetic could as well have been defined within the global `ggplot` call. It may be a bit more logical to specify it where it applies to the geom.
 
 ```{r linecolor-dim, fig.asp=.75, out.width='80%', fig.align='center'}
-ggplot(data = deaths, mapping = aes(x = month, y = deaths, linetype=sex)) +
-    geom_line()
+deaths <- data.frame(
+    month = rep(1:72, times = 2), 
+    sex = rep(factor(c("m", "f")), each = 72),
+    deaths = c(mdeaths, fdeaths)
+)
+
+ggplot(data = deaths, mapping = aes(x = month, y = deaths)) +
+    geom_line(aes(linetype = sex))
 ```
 
 
 ### Size {-}
 
-The size of the plotting symbol can also be used as an extra "dimension" in your visualization. Here is an example showing the solar radiation of the airquality data as third dimension.
+The size of the plotting symbol can also be used as an extra dimension in your visualization. Here is an example showing the solar radiation of the airquality data as third dimension.
 
 ```{r sizes-demo, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data = na.omit(airquality), 
-       mapping = aes(x = Wind, y = Ozone, size=Solar.R)) +
-    geom_point(color="red", alpha=0.5)
+       mapping = aes(x = Wind, y = Ozone, size = Solar.R)) +
+    geom_point(color = "red", alpha = 0.5) +
+    labs(size = "Solar radiation (Lang)") 
 ```
 
 
@@ -425,7 +463,7 @@ ggplot(data = na.omit(airquality),
 
 ### What are geometries {-}
 
-Geometries are the ways data can be visually represented. Boxplot, scatterplot and histogram are a few examples. There are **_many_** geoms available in ggplot2; type `geom_` in the console and you will get a listing. Even more are available outside the ggplot2 package. Here we'll only explore a few. 
+Geometries are the ways data can be visually represented. Boxplot, scatterplot and histogram are a few examples. There are **_many_** geoms available in ggplot2; type `geom_` in the console and you will get a listing. Even more are available outside the ggplot2 package. Here we'll only explore the most used geoms in science. 
 
 ### Boxplot {-}
 
@@ -444,13 +482,15 @@ Jitter is a good alternative to boxplot when you have small sample sizes, or dis
 dr_plot + geom_jitter(width = 0.1, height = 0)
 ```
 
-Here, a split over the sexes is added. Suddenly, a dramatic dosage effect becomes apparent that was smoothed out when the two sexes were combined.
+Note that vertical jitter was set to zero because the y-axis values are already in a continuous scale. You should use vertical jittering only when these have discreet values that otherwise overlap too much.  
+
+Below, a split over the sexes is added. Suddenly, a dramatic dosage effect becomes apparent that was smoothed out when the two sexes were combined. 
 
 ```{r plot_tidy_color, fig.width=7, fig.height=4}
 dr_plot + geom_jitter(width = 0.1, height = 0, aes(colour = sex))
 ```
 
-Alternatively, use a grid of plots
+Alternatively, use a grid of plots to emphasize the contrast further.
  
 ```{r plot_tidy_facet, fig.width=7, fig.height=4}
 dr_plot + 
@@ -460,15 +500,20 @@ dr_plot +
 
 ### Plot overlays: boxplot + jitter {-}
 
-This example shows how you can overlay plots on top of each other as much as you like.
+This example shows how you can overlay plots on top of each other as much as you like. The order in which you define the layers is the order in which they are stacked on top of each other in the graph. You could use this as a feature:
 
 ```{r plot-overlays, fig.asp=.75, out.width='80%', fig.align='center'}
+library(gridExtra) 
 dr_plot <- ggplot(dose_response_tidy, aes(x = dose, y = response))
-dr_plot + 
+p1 <- dr_plot + 
     geom_boxplot(fill='#E69F00') +
-    geom_jitter(width = 0.1, height = 0, size = 2, alpha = 0.6)
+    geom_jitter(width = 0.1, height = 0, size = 2, alpha = 0.4)
+p2 <- dr_plot + 
+    geom_jitter(width = 0.1, height = 0, size = 2, alpha = 0.6) +
+    geom_boxplot(fill='#E69F00') 
+grid.arrange(p1, p2, nrow = 1) #create a panel of plots
 ```
-
+The `gridExtra` package is discussed in a more complex setting below, in section "Advanced plotting aspects".
 
 ### Scatterplot: Points {-}
 
@@ -477,22 +522,50 @@ The `geom_point()` function is used to create the good old scatterplot of which 
 
 ### Line plots {-}
 
-When points can be logically connected it may be a good idea to use a line to visualize trends, as we have seen in the `deaths` plot in section \@ref(Aesthetics) 
+When points can be logically connected it may be a good idea to use a line to visualize trends, as we have seen in the `deaths` plot in section Aesthetics.
+
+If you want both lines and points you need to overlay them. In this example I take it a bit further bu adding the dimension 'activity' to the points geom only. This is a typical case for geom_line since the measurements of the two beavers were taken sequentially, for that particular beaver.
+
+```{r overlay-points-lines-beavers, fig.asp=.75, out.width='80%', fig.align='center'}
+b1_start <- beaver1[1, "time"] / 60
+b2_start <- beaver1[2, "time"] / 60
+
+suppressMessages(library(dplyr))
+#uses dplyr (later this course)
+beaverA <- beaver1 %>% mutate(time_h = seq(from = b1_start, 
+                                           to = b1_start + (nrow(beaver1)*10)/60, 
+                                           length.out = nrow(beaver1)))
+beaverB <- beaver2 %>% mutate(time_h = seq(from = b2_start, 
+                                           to = b2_start + (nrow(beaver2)*10)/60, 
+                                           length.out = nrow(beaver2)))
+beavers_all <- bind_rows(beaverA, beaverB) %>%
+    mutate(beaver = c(rep("1", nrow(beaverA)), rep("2", nrow(beaverB))),
+           activity = factor(activ, levels = c(0, 1), labels = c("inactive", "active")))
+
+ggplot(data = beavers_all, aes(x = time_h, y = temp)) +
+    geom_line(aes(linetype = beaver)) +
+    geom_point(aes(color = activity)) +
+    xlab("time (h)") +
+    ylab(expression('Temperature ('*~degree*C*')'))
+```
+
+
+
 
 ### Histograms {-}
 
-A histogram is a means to visualize a distribution.
+A histogram is a means to visualize the distribution of a dataset, as are boxplot (`geom_boxplot()`), violin plot (`geom_violin()`) and density plot (`geom_freqpoly()`).
 
 Here we look at the eruption intervals of the "faithful" geyser. A `binwidth` argument is used to adjust the number of bins. Alternative use the `bins` argument.
 
-```{r histogram1, fig.asp=.75, out.width='80%', fig.align='center'}
+```{r histogram1, fig.asp=.75, out.width='60%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
     geom_histogram(binwidth = 3)
 ```
 
 There are some statistics available to adjust what is shown on the y axis. The default that is used by `geom_histogram` is `stat(count)`, so if you don't specify anything this will be used. But if you want it scaled to a maximum of 1, use `stat(count / max(count))`. The `stat()` function is a flag to ggplot2 that you want to use calculated aesthetics produced by the statistic.You can use any transformation of the statistic, e.g. `y = stat(log2(count))`.
 
-```{r histogram2, fig.asp=.75, out.width='80%', fig.align='center'}
+```{r histogram2, fig.asp=.75, out.width='60%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
     geom_histogram(binwidth = 3, aes(y = stat(count / max(count)))) + 
     ylab(label = "normalized proportion")
@@ -500,7 +573,7 @@ ggplot(data=faithful, mapping = aes(x = waiting)) +
 
 Alternatively, if you want percentages, you can use `y = stat(count / sum(count) * 100)`.
 
-```{r histogram3, fig.asp=.75, out.width='80%', fig.align='center'}
+```{r histogram3, fig.asp=.75, out.width='60%', fig.align='center'}
 ggplot(data=faithful, mapping = aes(x = waiting)) + 
     geom_histogram(binwidth = 3, mapping = aes(y = stat(count / sum(count) * 100))) + 
     ylab(label = "%")
@@ -510,8 +583,8 @@ ggplot(data=faithful, mapping = aes(x = waiting)) +
 
 A violin plot is a compact display of a continuous distribution. It is a blend of geom_boxplot() and geom_density(): a violin plot is a mirrored density plot displayed in the same way as a boxplot. It is not seen as often as should be. An example best explains.
 
-```{r violinplot, fig.asp=.75, out.width='80%', fig.align='center'}
-ggplot(data=airquality, mapping = aes(x = Month, y = Temp, fill=Month)) +
+```{r violinplot, fig.asp=.75, out.width='70%', fig.align='center'}
+ggplot(data=airquality, mapping = aes(x = Month_f, y = Temp, fill = Month_f)) +
     geom_violin() + theme(legend.position = "none")
 ```
 
@@ -522,12 +595,9 @@ The bar plot is similar to a histogram in appearance, but quite different in int
 Here is a small example where the ten subjects of the `sleep` dataset have been charted (the x axis), and the `extra` column provided the height of the bar, split over the two groups. When no weight is provided, the occurrences of the different group levels will be counted and sued as weight.
 
 ```{r barplot1, fig.asp=.75, out.width='80%', fig.align='center'}
-ggplot(data = sleep,
-       mapping = aes(ID)) +
+ggplot(data = sleep, mapping = aes(ID)) +
     geom_bar(aes(weight = extra, fill = group))
 ```
-
-
 
 
 ### Overview of the main geoms {-}
@@ -535,29 +605,30 @@ ggplot(data = sleep,
 There are many geoms and even more outside the ggplot2 package.
 Here is a small overview of some of them.
 
-```{r ggplot2-building-blocks-2, fig.asp=.75, out.width='80%', fig.align='center', echo=FALSE}
+```{r ggplot2-building-blocks-2, echo=FALSE}
 geoms <- read.table("data/geom_functions.txt",
-                     sep=";",
+                     sep = ";",
                      header = T,
                      as.is = 1:2)
-knitr::kable(geoms,
-             caption = 'Some more geoms')
+knitr::kable(geoms, caption = 'Some more geoms')
 ```
 
-If you want to know them all, simply type `?geom_` and select the one that looks like the thing you want.
+If you want to know them all, simply type `?geom_` and select the one that looks like the thing you want, or go to the tidyverse [ggplot2 reference page](https://ggplot2.tidyverse.org/reference/).
 
 ## Inheritance of aesthetics
 
-Like the main `ggplot()` function, every `geom_` function accepts its own `mapping = aes(...)`. The mapping is _inherited_ from the ggplot() function, but you can specify your own "local" aesthetic mapping. Aesthetics defined within a geom_ function are scoped to that function only.
+Like the main `ggplot()` function, every `geom_` function accepts its own `mapping = aes(...)`. The mapping is _inherited_ from the ggplot() function so any `aes(...)` mapping defined in the main `ggplot()` call applies to all subsequent layers. However, you can specify your own "local" aesthetic mapping within a `geom_xxxx()`. Aesthetics defined within a geom_ function are scoped to that function call only. 
 
 In the plot below you see how this works (it is not a nice plot anymore, I know).
 Note that any aesthetic value specified outside the aes() function is simply a static property (in that scope).
 
 ```{r inheritace, fig.asp=.75, out.width='80%', fig.align='center', warning=F}
-ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
-    geom_smooth(aes(linetype = Month), method="lm") +
-    geom_point(aes(color = Month), alpha = 0.7) 
+ggplot(data = na.omit(airquality), mapping = aes(x = Solar.R, y = Ozone)) +
+    geom_smooth(aes(linetype = Month_f), method = "lm", formula = y ~ x) +
+    geom_point(aes(color = Month_f), alpha = 0.7) 
 ```
+
+Also note that you can "override" global (`ggplot()`) aesthetics in `geom_xxx()` but this can give unexpected behavior, as seen in the paragraph on Color.
 
 ## Faceting
 
@@ -565,8 +636,9 @@ Faceting is the process of splitting into multiple plots with exactly the same c
 
 ```{r facetting, fig.asp=.75, out.width='80%', fig.align='center', warning=F}
 ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
-    geom_smooth(aes(linetype = Month), method="lm") +
-    geom_point(aes(color = Month), alpha = 0.7) + facet_wrap(. ~ Month)
+    geom_smooth(aes(linetype = Month_f), method = "lm", formula = y ~ x) +
+    geom_point(aes(color = Month_f), alpha = 0.7) + 
+    facet_wrap(. ~ Month_f)
 ```
 
 
@@ -575,10 +647,7 @@ ggplot(data = airquality, mapping = aes(x = Solar.R, y = Ozone)) +
 The process in plotting using ggplot2 is usually very iterative.  
 You start with the base plot, passing it the **_aesthetic_** for x and y, as shown above, and then experiment with **_geometries_**,  **_colors_** and **_faceting_**.
 
-Look at every result and ask yourself  
-
-- what story does is tell?
-- is it the story you seek to tell?
+Look at every result and ask yourself **_what story does is tell?_** and **_is this the story I want to tell?_**.
 
 Only after you finish this phase you should apply make-up (labels, texts).
 Maybe new questions have arisen as a result of the plot you created?
@@ -601,42 +670,40 @@ ggplot(hair_eye_col_df, aes(x = Hair, y = Freq)) +
            stat = "identity", 
            color = "white",
            position = position_dodge(0.7)) + #causes overlapping bars
-    facet_wrap(~ Sex) + 
-    fill_palette("jco") # high contrast palette
+    facet_wrap(~ Sex) 
 ```
 
 ### Balloon plot
 
-Here is a dataset called housetasks that contains data on who does what tasks within the household.
+Here is a dataset called `housetasks` that contains data on who does what tasks within the household. 
 
 ```{r}
 (housetasks <- read.delim(
   system.file("demo-data/housetasks.txt", package = "ggpubr"),
-  row.names = 1
-  ))
+  row.names = 1))
 ```
-A balloon plot is an excellent way to visualize this kind of data:
+A balloon plot is an excellent way to visualize this kind of data. The function `ggballoonplot()` is part of the ggpubr package ("'ggplot2' Based Publication Ready Plots"). Have a look at [this page](https://rpkgs.datanovia.com/ggpubr/) for a nice review of its possibilities. 
 
 ```{r balloonplot1, fig.asp=.75, out.width='80%', fig.align='center'}
-ggballoonplot(housetasks, 
-              fill = "value")
+ggpubr::ggballoonplot(housetasks, fill = "value")
 ```
 As you can see the counts map to both size and color.
 Balloon plots can also be faceted.
 
 ```{r balloonplot2, fig.asp=.75, out.width='80%', fig.align='center'}
-ggballoonplot(hair_eye_col_df, x = "Hair", y = "Eye", size = "Freq",
+ggpubr::ggballoonplot(hair_eye_col_df, x = "Hair", y = "Eye", size = "Freq",
               fill = "Freq", facet.by = "Sex",
               ggtheme = theme_bw()) +
   scale_fill_viridis_c(option = "C")
 ```
+
 ### Mosaic plot
 
 A mosaic plot (library vcd) scales the tiles according to the count.
 
 ```{r mosaic, fig.asp=.75, out.width='80%', fig.align='center'}
-library(vcd)
-mosaic(HairEyeColor, #needs the table object
+suppressMessages(library(vcd))
+mosaic(HairEyeColor, #needs an object of type table
        shade = TRUE, 
        legend = TRUE) 
 ```
@@ -647,10 +714,10 @@ This type needs at least 3 columns, otherwise you get hard-to solve errors!
 Row names should not be in the first column, but assigned as `row.names`.
 
 ```{r correspondence-analysis, fig.asp=.75, out.width='80%', fig.align='center', warning=FALSE}
-library(FactoMineR)
-library(factoextra)
-res.ca <- CA(housetasks, graph = FALSE)
-fviz_ca_biplot(res.ca, repel = TRUE)
+suppressMessages({library(FactoMineR)
+                  library(factoextra)})
+res.ca <- CA(housetasks, graph = FALSE) # package FactoMineR performs correspondence analysis
+fviz_ca_biplot(res.ca, repel = TRUE) # package factoextra visualizes
 ```
 
 
@@ -658,11 +725,11 @@ fviz_ca_biplot(res.ca, repel = TRUE)
 
 ### Plot panels from `for` loops using `gridExtra::grid.arrange()`
 
-Sometimes you may wish to create a panel of plots using a `for` loop, similarly to the use of `par(mfrow = c(rwos, cols))` in base R. There are a few caveats to this seemingly simple notion.
+Sometimes you may wish to create a panel of plots using a `for` loop, similarly to the use of `par(mfrow = c(rows, cols))` in base R. There are a few caveats to this seemingly simple notion.
 
 For instance, to create a set of boxplots for a few columns of the `airquality` dataset, you would do something like this in base R: 
 
-```{r panel-plots-base-R}
+```{r panel-plots-base-R, results='hold'}
 # set the number of rows and columns
 par(mfrow = c(2, 2))
 
@@ -678,7 +745,7 @@ par(mfrow = c(1, 1))
 
 When you naively migrate this structure to a ggplot setting, it will become something like this.
 
-```{r panel-plots-ggplot-1, fig.width="30%"}
+```{r panel-plots-ggplot-1, out.width="30%", results='hold'}
 par(mfrow = c(2, 2))
 
 for (n in names(airquality[, 1:4])) {
@@ -697,11 +764,11 @@ Also note that if you omit the `print(plt)` call this outputs _nothing_, which i
 Here is a second version.
 
 
-```{r panel-plots-ggplot-2, fig.width="30%"}
+```{r panel-plots-ggplot-2, out.width="30%", results='hold'}
 par(mfrow = c(2, 2))
 
 for (n in names(airquality[, 1:4])) {
-    plt <- ggplot(data = airquality,
+    plt <- ggplot(data = na.omit(airquality),
                   mapping = aes_string(y = n)) +
         geom_boxplot() +
         xlab(n)
@@ -711,19 +778,19 @@ for (n in names(airquality[, 1:4])) {
 par(mfrow = c(1, 1))
 ```
 
-This works as required except for the panel-of-plots part. The `mfrow` option to `par()` does not work with `ggplot2`. This can be fixed by the use of the `gridExtra` package, together with the base R `do.call()` function.  
+This works as required except for the panel-of-plots part. The `mfrow` option to `par()` does not work with `ggplot2`. This can be fixed through the use of the `gridExtra` package, together with the base R `do.call()` function.  
 
 ```{r panel-plots-ggplot-3, fig.asp=.75, out.width='80%', fig.align='center'}
 library(gridExtra)
+airquality_no_na <- na.omit(airquality)
 # a list to store the plots
 my_plots <- list()
-
 
 #use of indices instead of names is important!
 for (i in 1:4) {
     n <- names(airquality)[i]
     #omitting rows with NA for each single column
-    plt <- ggplot(data = airquality[!is.na(airquality[, n]), ],
+    plt <- ggplot(data = airquality_no_na,
                   mapping = aes_string(y = n)) +
         geom_boxplot() +
         xlab(n)
@@ -733,7 +800,7 @@ for (i in 1:4) {
 do.call(grid.arrange, c(my_plots, nrow = 2))
 ```
 
-So the rules for useage of a for-loop to create a panel of plots:
+So the rules for usage of a for-loop to create a panel of plots:
 
 - use `aes_string()` to specify your columns
 - store the plots in a list
@@ -742,11 +809,38 @@ So the rules for useage of a for-loop to create a panel of plots:
 
 ### The `GGally::ggPairs()` function
 
+The `ggpairs()` function of the `GGally` package allows you to build a scatterplot matrix just like the base R `pairs()` function.
+
+Scatterplots of each pair of numeric variable are drawn on the left part of the figure. Pearson correlation is displayed on the right. Variable distribution is available on the diagonal.
+
+```{r ggpairs-demo, fig.asp=.75, out.width='80%', fig.align='center'}
+GGally::ggpairs(airquality_no_na[1:4], progress = FALSE)
+```
+
+Look at [https://www.r-graph-gallery.com/199-correlation-matrix-with-ggally.html](https://www.r-graph-gallery.com/199-correlation-matrix-with-ggally.html) for more examples.
 
 ### Marginal plots using `ggExtra::ggMarginal()`
 
+You can use `ggMarginal()` to add marginal distributions to the X and Y axis of a ggplot2 scatterplot. 
+It can be done using histogram, boxplot or density plot using the `ggExtra` package
+
+```{r ggmarginal-demo, fig.asp=.75, out.width='80%', fig.align='center'}
+library(ggExtra)
+
+# base plot
+p <- ggplot(airquality, aes(x=Temp, y=Ozone, color=Month_f)) +
+      geom_point() +
+      theme(legend.position="none")
+
+p1 <- ggMarginal(p, type="histogram")
+p2 <- ggMarginal(p, type="density")
+p3 <- ggMarginal(p, type="boxplot")
+
+gridExtra::grid.arrange(p1, p2, p3, nrow = 1)
+```
 
 
+See [https://www.r-graph-gallery.com/277-marginal-histogram-for-ggplot2.html](https://www.r-graph-gallery.com/277-marginal-histogram-for-ggplot2.html) for more details.
 
 
 
@@ -776,8 +870,8 @@ DF <- data.frame(variable = as.factor(1:10), value = log2(2:11))
 
 ggplot(DF, aes(variable, value, fill = variable)) +
     geom_bar(width = 1, stat = "identity", color = "white") +
-    geom_errorbar(aes(ymin = value - se(DF$value), 
-                      ymax = value + se(DF$value), 
+    geom_errorbar(aes(ymin = value - se(value), 
+                      ymax = value + se(value), 
                       color = variable), 
                       width = .2) + 
     scale_y_continuous(breaks = 0:nlevels(DF$variable)) +
@@ -795,25 +889,25 @@ Here are is the minimal theme where the text sizes have been modified somewhat.
 
 ```{r themes1, fig.asp=.75, out.width='80%', fig.align='center'}
 ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
-  geom_point(mapping=aes(color=Month)) + 
-  geom_smooth(method="loess") +
+  geom_point(mapping = aes(color = Month_f)) + 
+  geom_smooth(method = "loess", formula = y ~ x) +
   xlab(expression("Temperature " (degree~F))) +
   ylab("Ozone (ppb)") +
-  labs(color="Month") +
+  labs(color = "Month") +
   theme_minimal(base_size = 14)
 ```
 
-Note that if the `color = Month` aesthetic would have been put in the main ggplot call, the smoother would have been split over the Month groups.
+Note that if the `color = Month_f` aesthetic would have been put in the main ggplot call, the smoother would have been split over the Month groups.
 
 Alternatively, the theme can be specified completely, as show below.
 
 ```{r themes2, fig.asp=.75, out.width='80%', fig.align='center'}
-ggplot(data = airquality, mapping=aes(x=Temp, y=Ozone)) +
-  geom_point(mapping=aes(color=Month)) + 
-  geom_smooth(method="loess") +
+ggplot(data = na.omit(airquality), mapping = aes(x = Temp, y = Ozone)) +
+  geom_point(mapping = aes(color = Month_f)) + 
+  geom_smooth(method = "loess") +
   xlab("Temperature (F)") +
   ylab("Ozone (ppb)") +
-  labs(color="Month") +
+  labs(color = "Month") +
   theme(axis.text.x = element_text(size = 12, colour = "blue", face = "bold"),
         axis.text.y = element_text(size = 12, colour = "red", face = "bold"),
         axis.title.x = element_text(size = 16, colour = "blue", face = "bold.italic"),
@@ -840,13 +934,13 @@ The panel below demonstrates a few.
 ```{r annotation, fig.asp=.75, out.width='80%', fig.align='center'}
 (outlier <- airquality[!is.na(airquality$Ozone) & airquality$Ozone > 150, ])
 
-ggplot(data = na.omit(airquality), mapping=aes(x=Temp, y=Ozone)) +
-  annotate("rect", xmin=72, xmax=77, ymin=0, ymax=50, 
-           alpha=0.1, color="blue", fill="blue") +
+ggplot(data = na.omit(airquality), mapping = aes(x = Temp, y = Ozone)) +
+  annotate("rect", xmin = 72, xmax = 77, ymin = 0, ymax = 50, 
+           alpha = 0.1, color = "blue", fill = "blue") +
   annotate("point", x = outlier$Temp, y = outlier$Ozone, 
            color = "darkred", size = 4, alpha = 0.3) + 
-  geom_point(mapping=aes(color=Month)) + 
-  geom_smooth(method="loess") +
+  geom_point(mapping = aes(color = Month_f)) + 
+  geom_smooth(method = "loess", formula = y ~ x) +
   xlab("Temperature (F)") +
   ylab("Ozone (ppb)") + 
   annotate("text", x = outlier$Temp, y = outlier$Ozone -5, label = "Outlier") + 
@@ -854,4 +948,6 @@ ggplot(data = na.omit(airquality), mapping=aes(x=Temp, y=Ozone)) +
            y = outlier$Ozone + 4, yend = outlier$Ozone, 
            color = "darkred", size = 2, arrow = arrow()) 
 ```
+
+Note there is a `geom_rectangle()` as well, but as I have discovered after much sorrow, it behaves quite unexpectedly when using the `alpha = ` argument on its fill color. For annotation puyrposes you should always use the `annotate()` function.
 

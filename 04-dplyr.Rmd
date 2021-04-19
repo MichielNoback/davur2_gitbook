@@ -176,7 +176,7 @@ Dplyr aims to provide a function for each basic verb of data manipulation:
 
 If you simply want to select rows by index, use `slice()`
 
-```{r}
+```{r slice-demo}
 slice(dose_response_long, 2:4)
 ```
 
@@ -186,11 +186,11 @@ The functions `head()` and `tail()` work as expected; they work with tibbles as 
 
 The `distinct()` function retains only unique/distinct cases from an input `tbl` or `data.frame`. You provide variables to use when determining uniqueness. If there are multiple cases for a given combination of inputs, only the first case will be preserved. If omitted, will use all variables. The `.keep_all` argument specifies whether all variables in the tbl should be kept.
 
-```{r}
+```{r distinct-demo-1}
 dose_response_long %>% distinct(sex, Dose, .keep_all = T)
 ```
 
-```{r}
+```{r distinct-demo-2}
 dose_response_long %>% distinct(Dose)
 ```
 
@@ -200,13 +200,13 @@ This function is similar to the `subset` argument of the `subset()` function.
 
 The filter function `filter()` allows you to select a subset of cases in a data frame. The first argument is the tibble or data frame. The second and subsequent arguments refer to variables within that data frame, selecting cases where the expression is TRUE.
 
-```{r}
+```{r filter-demo-1}
 dose_response_long %>% filter(Dose == "dose10mg" & Response > 60)
 ```
 
 When you want to filter rows based on a regular expression pattern matching a character value you can do something like the chunk below, because the only thing select needs is a logical vector.
 
-```{r}
+```{r filter-demo-2}
 (t <- tibble(x = c("abb", "bbc", "dbbd", "aacc"), y = 1:4))
 t %>% filter(grepl("bb", x))
 ```
@@ -214,7 +214,7 @@ t %>% filter(grepl("bb", x))
 
 Using `str_detect()` from the `stringr` tidyverse package this is also possible:
 
-```{r}
+```{r filter-demo-3}
 t %>% filter(str_detect(x, "bb"))
 ```
 
@@ -227,13 +227,13 @@ Choose variables from a table. Closely related to `rename()` discussed below; `s
 
 When you use the `key = value` format this will result in a rename of the variable.
 
-```{r}
+```{r select-demo-1}
 select(dose_response_long, patient, gender = sex)
 ```
 
 Use the minus sign when you want to select everything _but_ a variable:
 
-```{r}
+```{r select-demo-2}
 select(dose_response_long, -patient, -sex)
 ## same as 
 #select(dose_response_long, -c(patient, sex))
@@ -241,7 +241,7 @@ select(dose_response_long, -patient, -sex)
 
 You can use the colon operator to indicate a range of variables:
 
-```{r}
+```{r select-demo-3}
 select(dose_response_long, patient:Dose)
 ```
 
@@ -260,7 +260,7 @@ Both with `select()` and `rename()` and also with `mutate_at()` you can use the 
 - `last_col()`: Select last variable, possibly with an offset.
 
 
-```{r}
+```{r select-demo-4}
 select(dose_response_long, contains("o"))
 ```
 
@@ -268,7 +268,7 @@ select(dose_response_long, contains("o"))
 
 Rename variables from a table.
 
-```{r}
+```{r rename-demo-1}
 dose_response_long %>% rename(Patient = patient, Gender = sex)
 ```
 
@@ -276,7 +276,7 @@ dose_response_long %>% rename(Patient = patient, Gender = sex)
 
 The `top_n()` function makes it easy to select a few cases that based on the ranking of a value:
 
-```{r}
+```{r top-n-demo-1}
 dose_response_long %>% top_n(3, Response)
 ```
 
@@ -284,7 +284,7 @@ We see 4 cases returned because the third rank is the same for two cases.
 
 This is especially interesting with grouped data:
 
-```{r}
+```{r top-n-demo-2}
 dose_response_long %>% group_by(Dose) %>% top_n(3, Response)
 ```
 
@@ -293,7 +293,7 @@ dose_response_long %>% group_by(Dose) %>% top_n(3, Response)
 
 Using `pull()` you can obtain atomic vectors.
 
-```{r}
+```{r pull-demo-1}
 pull(dose_response_long, Response)
 ```
 
@@ -304,19 +304,19 @@ With `dose_response_long[, 4]` it matters whether you are working with a tibble 
 
 If you want to sort the rows of a dataframe/tibble by the values of one or more columns, use `arrange()`
 
-```{r}
+```{r arrange-demo-1}
 dose_response_long %>% arrange(Response) %>% slice(1:3)
 ```
 
 Use the function `desc()` to reverse the ordering
 
-```{r}
+```{r arrange-demo-2}
 dose_response_long %>% arrange(desc(Response)) %>% head(1)
 ```
 
 Note that the previous chunk is equivalent to this
 
-```{r}
+```{r arrange-demo-3}
 dose_response_long %>% top_n(1, Response)
 ```
 
@@ -326,7 +326,7 @@ So natural ordering is from low to high, but the `top_n()` function always order
 
 There are two functions available for random sampling: `sample_n()` and `sample_frac()`. 
 
-```{r}
+```{r sample-demo-1}
 sample_frac(dose_response_long, 0.05, replace = TRUE)
 ```
 
@@ -339,7 +339,7 @@ A new variable is usually the result of some operation on one or more previous v
 
 For instance, the `cumsum()` function returns the cumulative sum of a numeric vector:
 
-```{r}
+```{r window-functions-cumsu-1}
 cumsum(1:5)
 ```
 
@@ -347,75 +347,75 @@ Here are the main window functions. Note that some of them come from base R. Lat
 
 - **_`dplyr::lead`_**  
 Copy with values shifted by 1. 
-    ```{r}
+    ```{r window-functions-lead}
     lead(c(1, 4, 2, 8))
     ```
 
 - **_`dplyr::lag`_**  
 Copy with values lagged by 1. 
-    ```{r}
+    ```{r window-functions-lag}
     lag(c(1, 4, 2, 8))
     ```
 
 - **_`dplyr::min_rank`_**   
 Ranks on values, from low to high. Use `desc()` to reverse.  
-    ```{r}
+    ```{r window-functions-min-rank}
     min_rank(c(5, 4, 2, 8))
     ```
 
 - **_`dplyr::ntile`_**   
 Bin vector into n buckets. 
-    ```{r}
+    ```{r window-functions-ntile}
     ntile(c(5, 4, 2, 8, 1), 3)
     ```
 
 - **_`dplyr::between`_**   
 Are values between a and b? 
-    ```{r}
+    ```{r window-functions-between}
     between(c(5, 4, 2, 8, 1), 3, 5)
     ```
 
 - **_`dplyr::cummean`_**   
 Cumulative mean 
-    ```{r}
+    ```{r window-functions-cummean}
     cummean(c(5, 4, 2, 8, 1))
     ```
 
 - **_`cumsum`_**    
 Cumulative sum
-    ```{r}
+    ```{r window-functions-cumsum-2}
     cumsum(c(5, 4, 2, 8, 1))
     ```
 
 - **_`cummax`_**   
 Cumulative maximum 
-    ```{r}
+    ```{r window-functions-cummax}
     cummax(c(5, 4, 2, 8, 1))
     ```
 
 - **_`cummin`_**   
 Cumulative minimum 
-    ```{r}
+    ```{r window-functions-cummin}
     cummin(c(5, 4, 2, 8, 1))
     ```
 
 - **_`cumprod`_**   
 Cumulative product
 
-    ```{r}
+    ```{r window-functions-cumprod}
     cumprod(c(5, 4, 2, 8, 1))
     ```
 
 - **_`pmax`_**  
 Element-wise maximum 
-    ```{r}
+    ```{r window-functions-pmax}
     pmax(c(5, 4, 2, 8, 1), c(2, 2, 3, 4, 3))
     ```
 
 - **_`pmin`_**   
 Element-wise minimum
 
-    ```{r}
+    ```{r window-functions-pmin}
     pmin(c(5, 4, 2, 8, 1), c(2, 2, 3, 4, 3))
     ```
 
@@ -424,9 +424,9 @@ Element-wise minimum
 
 The function `mutate()` can be used to calculate and append one or more columns.The window functions from the previous section are often-used helpers.
 
-For instance, given the `ChickWeight` dataset which shows weight gain for `r ChickWeight %>% distinct(Chick) %>% count()` chicks:
+For instance, given the `ChickWeight` dataset which shows weight gain for 50 chicks:
 
-```{r}
+```{r mutate-demo-1}
 chicks <- as_tibble(ChickWeight) 
 chicks %>% head(5)
 ```
@@ -435,20 +435,20 @@ Suppose we want to know the daily weight gain of these chicks (as a challenge, y
 
 Using `lag()` and `mutate()` this is a breeze (or so it seems):
 
-```{r}
+```{r mutate-demo-2}
 (chicks <- chicks %>% mutate(weight_gain = weight - lag(weight)))
 ```
 
 ...but the devil is in the details:
 
-```{r}
+```{r mutate-demo-3}
 chicks %>% slice(10:15)
 ```
 
 The transition from chick 1 to chick 2 is not taken into account!
 So to get the weight gain for each chick, we need to split the data first. This is dealt with in a later section but here is a preview:
 
-```{r}
+```{r mutate-demo-4}
 chicks <- chicks %>% 
     group_by(Chick) %>% #split on chicks
     mutate(weight_gain = weight - lag(weight)) %>% 
@@ -458,7 +458,7 @@ slice(chicks, 10:15)
 
 Can you use a custom function in a `mutate` context? Of course you can!
 
-```{r}
+```{r mutate-demo-5}
 my_z <- function(x) {
     abs((abs(x - mean(x)) / sd(x)))
 }
@@ -469,7 +469,7 @@ women %>%
 
 And what's more, you can make multiple columns in one operation where the calculations for the subsequent columns are interdependent.
 
-```{r}
+```{r mutate-demo-6}
 women %>% 
     mutate(z_score = my_z(weight),
            z_bin = ntile(z_score, 3)) %>% 

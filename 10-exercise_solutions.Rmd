@@ -615,12 +615,11 @@ skeleton_proportions$genera_moving_average <- moving_average_gen
 
 #skeleton_proportions <- skeleton_proportions[, c(1:4, 6, 5, 7)] 
 
-##recreate the long form with pivot_longer
+## recreate the long form. Note the use of `.value` which is a critical aspect!
 skeleton_prop_avg_long <- pivot_longer(data = skeleton_proportions,
-             cols = matches("_"),
-             names_pattern = "(genera|specimen)_",
-             values_to = c("proportion", "moving_average"),
-             names_to = "level")
+              cols = matches("_"),
+              names_pattern = "(genera|specimen)_(proportion|moving_average)",
+              names_to = c("level",".value"))
 ```
 
 Finally, plot:
@@ -683,13 +682,14 @@ skeleton_prop_and_totals <- merge(skeleton_proportions, skeleton_totals, by = "M
 ## reshuffling is required for pivot_longer to work as expected!!!
 skeleton_prop_and_totals <- skeleton_prop_and_totals[, c(1:4, 6, 5, 7)]
 
-## re-create the long form with pivot_longer
+
+## again this used to work but not anymore
 (skeleton_prop_totals_long <- pivot_longer(
     data = skeleton_prop_and_totals,
     cols = matches("_"),
-    names_pattern = "(genera|specimen)_",
-    values_to = c("proportion", "totals"),
-    names_to = "level"))
+    names_pattern = "(genera|specimen)_(proportion|totals)",
+    #values_to = c("proportion", "totals"),
+    names_to = c("level", ".value")))
 ```
 
 Now for the plot

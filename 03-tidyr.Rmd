@@ -81,7 +81,7 @@ Obviously, the data you gather into a single column must be a single measurement
 
 As an extra example, here is the dose_response data again.
 
-```{r read-dose-response}
+```{r read-dose-response-1}
 dose_response <- read.table("data/dose_response2.txt",
                             header = T,
                             sep=";",
