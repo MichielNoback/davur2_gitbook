@@ -477,114 +477,115 @@ women %>%
 ```
 
 
-### Create new variables based on more columns
+### Multi-column mutate or summary
 
-#### `mutate_all()`
+Since the previous version of this ebook, sn entire group of functions has been replaced by a novel strategy to select columns for multiple-column mutate operations (and other similar actions). The functions `mutate_all()`, `mutate_at()` and `mutate_if()` have been superseded by the use of `across()`. The help document also directs the reader to `vignette("colwise")` - paste this in the console to read it for yourself. You will encounter the deprecated functions in many online examples but I encourage you to use the `across()` syntax.
 
-The `mutate_all()` function is similar to the baser R `apply()` function.
+The `across()` function takes two arguments: a selection of columns - often the result of one of the tidyselect helpers - and a function or list of functions to apply.
 
-Its syntax is a bit puzzling at first, and this has not been made easier by the introduction of new ways to code it.
+#### Many ways to select columns {-}
+
+In this first example the tidyselect helper function `everything()` is used.
+This is similar to usage of the base R `apply()` function.
 
 Suppose you want to calculate the log2 of all numeric values in the `iris` dataset.
 In base R you would probably do it like this:
 
-```{r}
+```{r accross-example-0}
 head(apply(iris[, -5], MARGIN = 2, FUN = log2))
 ```
 
-When you do it with `mutate_all()` this is the solution you will encounter most in a Google search:
+When you do it with `mutate(across(...))` this is the most similar solution: 
 
-```{r}
+```{r accross-example-1}
 iris %>% 
     select(-Species) %>%
-    mutate_all(funs(log2(.))) %>%
+    mutate(across(everything(), log2)) %>%
     head(3)
 ```
 
-It gives a deprecation warning, so apparently there are new and improved ways to specify the function(s) to be applied. Let's review these.
+The tidyselect helper `everything()` does what you would expect given its name. Notice how the original columns have been dropped and new columns have the same name as the original ones. 
 
-**_A simple named list_**. This is actually much like the `apply()` approach.
+We could have used the same approach to column selection with `summarise()`:
 
-```{r}
+```{r accross-example-2}
 iris %>% 
     select(-Species) %>%
-    mutate_all(list(mean = mean)) %>%
-    head(2)
+    summarise(across(everything(), mean))
 ```
 
-So this adds 4 additional rows to the selection without Species and generates variable names by appending `_mean`. This is different from the first approach in that the old variables are kept beside the new ones.
+The `select(-Species) %>%` is however a bit redundant if you use the `across()` function to its full potential in combination with tidyselect helpers. Here are some examples (only the first evaluated because output is the similar for all).
 
-When you supply two functions, e.g. `list(mean = mean, sd = sd)`, a variable is added for another four columns (8 in total).
+Using indices: 
 
-Personally I do not like this. I like it when a method is called directly, with parentheses.
+```{r accross-example-3}
+iris %>% summarize(across(1:4, mean))
+```
+Using column names (no quotes required):
 
-**_Auto named with_ `tibble::lst()`**. This is similar to the previous one; you supply a list of function names. The names of these functions define the postfix of the variable name.
+```{r accross-example-4, eval = F}
+iris %>% summarize(across(c(Sepal.Length, Sepal.Width), mean))
+```
+Using text matching on column names:
 
-```{r}
+```{r accross-example-5, eval = F}
+iris %>% summarize(across(starts_with("P"), mean))
+iris %>% summarize(across(contains("."), mean))
+```
+
+Finally: Using `where(is.numeric)` to apply a logical filter to the column type:
+
+```{r accross-example-6, eval = F}
+iris %>% summarize(across(where(is.numeric), mean))
+```
+
+Execute `help(package = "tidyselect")` to see a listing of more possibilities.
+You see, the alternatives to selecting columns are almost endless.
+
+
+#### Many ways to apply functions {-}
+
+Besides a single function name to apply, you can provide lists of functions, anonymous functions and lambdas. Here are some examples.
+
+You can provide a named list to apply more than one function. in that case the list name is used as column name. Surprisingly enough, the original columns are maintained in this use case (also when your list contains only one entry)! 
+
+```{r accross-example-7}
 iris %>% 
     select(-Species) %>%
-    mutate_all(lst(mean, sd)) %>%
-    head(2)
+    mutate(across(everything(), list(log = log2, sqrt = sqrt))) %>%
+    head(3)
 ```
+When you don't give the entries names (e.g. `list(log2, sqrt)` instead of `list(log = log2, sqrt = sqrt)`) the resulting column names will receive simple serial numbers.
 
-**_Using lambdas_**. Lambda's are anonymous function-like expressions. Although this form is harder to grasp, it does make it easier to pass arguments to the function you want executed by `mutate_all` (in this case `trim = .2` to `mean`).
+However, when you use `tibble::list()` instead, the function names do get used even though you don't provide names (results omitted):
 
-```{r}
+```{r accross-example-8, eval = F}
 iris %>% 
     select(-Species) %>%
-    mutate_all(list(~ mean(., trim = 0.2), ~ sd(.))) %>%
-    head(2)
+    mutate(across(everything(), list(log = log2, sqrt = sqrt)))
 ```
 
-The expression `~ mean(., trim = 0.2)` is therefore equivalent to something like 
-`function (.) mean(., trim = 0.2)` so the tilde is shorthand for `function (.)`
 
-Strangely enough, when experimenting further, I find that this simple solution also works for a single function to be applied:
+You can also pass **_lambdas_** to `across()` instead of a function name. Lambda's are anonymous function-like expressions. Although this form is harder to grasp, it does make it easier to pass arguments to the function you want executed (in this case `tcenter = FALSE` to `scale`).
 
-```{r}
+```{r accross-example-9}
 iris %>% 
-    select(-Species) %>%
-    mutate_all(my_z) %>% # or mutate_all(function(x){abs((abs(x - mean(x)) / sd(x)))})
-    head(2)
+    mutate(across(1:4, ~ scale(.x, center = FALSE))) %>%
+    head(5)
 ```
-Again, this gives only the new variables, not the preexisting ones.
 
-It can be concluded that, whatever the approach, a list of executables of some form needs to be provided. Choose the one of your liking.
+Again, you can also pass a (named) list:
 
-#### `mutate_at()`
-
-In the previous examples, a selection of the numeric columns was required before `mutate_all()` could be executed. An alternative approach is to use `mutate_at()` which has an additional argument for the column selection.
-
-
-```{r}
+```{r accross-example-10}
 iris %>% 
-    mutate_at(vars(contains(".")), my_z) %>% 
-    head(2)
+    mutate(across(1:4, list(scaled = ~ scale(., center = FALSE), 
+                            mean = ~ mean(., trim = 0.2)))) %>%
+    head(5)
 ```
 
-The selection can be specified in several ways:
 
-- `mutate_at(vars(-Species), my_z)`
-- `mutate_at(1:4, my_z)`
-- `mutate_at(vars(-Species), my_z)`
-- `mutate_at(vars(matches("Width|Length")), my_z)`
-- `mutate_at(vars(contains(".")), my_z)`
-
-and there are probably more ways to make a column selection.
-
-
-You can see that the original variables are replaced with the original variables - that is, in the modified copy of the tibble. As you know it is customary in R to return a modified copy, not to overwrite original data unless you are explicitly saying so. 
-
-
-#### `mutate_if()`
-
-Even simpler in the case of the iris data is the `mutate_if()` function. After all, the entire point was to modify the numeric variables:
-
-```{r}
-iris %>% 
-    mutate_if(is.numeric, my_z) %>% 
-    head(2)
-```
+The expression `~ mean(.x, trim = 0.2)` is therefore equivalent to something like 
+`function (.x) mean(.x, trim = 0.2)` so the tilde is shorthand for `function (.x)`. Instead of `.x` a single dot `.` is also allowed, and this syntax is used in more locations of the tidyverse - see `group_map()` and related functions. 
 
 
 ### Change a variable: `recode()` and `recode_factor()`
@@ -708,6 +709,35 @@ Here is an example of `group_map()`. As you can see it takes a lambda expression
 dose_response_long %>%
     group_by(Dose) %>%
     group_map(~ quantile(.x$Response, probs = seq(0, 1, 0.2)))
+```
+
+Below is another example, where the resulting list of three dataframes is combined into a single dataframe:
+
+```{r}
+iris %>%
+    group_by(Species) %>%
+    group_map(.f = ~ data.frame(Sep.rat = .x$Sepal.Length / .x$Sepal.Width,
+                                Pet.rat = .x$Petal.Length / .x$Petal.Width)) %>%
+    bind_rows()
+```
+
+Here is an example of group_modify. 
+
+```{r}
+iris %>%
+    group_by(Species) %>%
+    group_modify(~ tibble(quant = quantile(.x$Petal.Length, probs = seq(0, 1, 0.2))))
+```
+
+Of course, it would have been nicer to put the quantiles in separate columns.
+
+```{r}
+iris %>%
+    group_by(Species) %>%
+    group_modify(~ tibble(quant = quantile(.x$Petal.Length, probs = seq(0, 1, 0.2)))) %>%
+    ungroup() %>%
+    mutate(prob = rep(seq(0, 1, 0.2), times = 3)) %>%
+    pivot_wider(names_from = prob, values_from = quant)
 ```
 
 Use `group_walk()` when you only want to have a peek at each group before processing further.

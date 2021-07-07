@@ -515,6 +515,33 @@ grid.arrange(p1, p2, nrow = 1) #create a panel of plots
 ```
 The `gridExtra` package is discussed in a more complex setting below, in section "Advanced plotting aspects".
 
+### Plot overlays: smooth + ribbon {-}
+
+Here is another pair of examples of overlays of different geoms. In the first, the original datapoints are included. 
+
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+    geom_point(alpha = 0.4) +
+    geom_smooth(se = FALSE, color = "darkgreen", method = "loess", formula = "y ~ x") +
+    geom_ribbon(aes(ymin = 0,
+                    ymax = predict(loess(hwy ~ displ))),
+                alpha = 0.3, fill = 'green')
+```
+
+Note that the `method = "loess", formula = "y ~ x"` arguments to `geom_smooth()` are the defaults. However, if omitted they trigger a message (`\`geom_smooth()\` using method = 'loess' and formula 'y ~ x'`) that I do not like in my output.
+In this second example, the data points are omitted altogether, making the plot focus solely on global trend.
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) +
+    geom_smooth(se = FALSE, color = "darkgreen") +
+    geom_ribbon(aes(ymin = 10,
+                    ymax = predict(loess(hwy ~ displ))),
+                alpha = 0.3, fill = 'green') +
+    ylim(10, max(mpg$hwy))
+```
+
+
 ### Scatterplot: Points {-}
 
 The `geom_point()` function is used to create the good old scatterplot of which we have seen several examples already.
